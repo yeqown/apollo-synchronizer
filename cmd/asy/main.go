@@ -17,6 +17,7 @@ func main() {
 	app.Version = "v1.0.0"
 	app.Flags = flags
 	app.Action = action
+	app.Commands = commands
 }
 
 func action(c *cli.Context) error {
@@ -32,4 +33,8 @@ var flags = []cli.Flag{
 		Name:  "down",
 		Usage: "download from apollo portal",
 	},
+}
+
+var commands = []*cli.Command{
+	genToolCommand(),
 }
