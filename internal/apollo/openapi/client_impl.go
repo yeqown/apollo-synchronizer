@@ -156,7 +156,6 @@ func (o openapiClient) PublishNamespace(
 	r, err := o.cc.
 		R().
 		SetContext(ctx).
-		SetQueryParam("createIfNotExists", "false").
 		SetBody(body).
 		SetResult(&result).
 		Post(uri)

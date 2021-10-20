@@ -90,11 +90,11 @@ func tryFromFile(cwd string, scope *internal.SynchronizeScope) {
 func tryFromContext(ctx *cli.Context, scope *internal.SynchronizeScope) {
 	// mode
 	scope.Mode = internal.SynchronizeMode_UNKNOWN
-	if ctx.Bool("up") {
-		scope.Mode = internal.SynchronizeMode_UPLOAD
-	}
 	if ctx.Bool("down") {
 		scope.Mode = internal.SynchronizeMode_DOWNLOAD
+	}
+	if ctx.Bool("up") {
+		scope.Mode = internal.SynchronizeMode_UPLOAD
 	}
 
 	scope.Force = ctx.Bool("force")

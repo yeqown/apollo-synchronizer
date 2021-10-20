@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -52,21 +53,23 @@ func (s *synchronizer) Synchronize(ctx context.Context, scope *SynchronizeScope)
 	if err != nil {
 		return errors.Wrap(err, "failed to ListNamespaces in synchronizer.Synchronize")
 	}
-	namespaces := make([]string, len(namespaceInfos))
-	for idx, v := range namespaceInfos {
+	namespaces := make([]string, 0, len(namespaceInfos))
+	for _, v := range namespaceInfos {
 		if v.Format == openapi.Format_Properties {
+			// skip properties format
 			continue
 		}
 
-		namespaces[idx] = v.Name
+		namespaces = append(namespaces, v.Name)
 	}
 
-	files := make([]string, len(scope.LocalFiles))
-	for idx, v := range scope.LocalFiles {
+	files := make([]string, 0, len(scope.LocalFiles))
+	for _, v := range scope.LocalFiles {
 		if filepath.Ext(v) == string(openapi.Format_Properties) {
+			// skip properties format
 			continue
 		}
-		files[idx] = filepath.Base(v)
+		files = append(files, filepath.Base(v))
 	}
 
 	// compare and display the synchronization information.
@@ -262,7 +265,66 @@ Failed:
 }
 
 func (s synchronizer) upload(ctx context.Context, d diff) (r *synchronizeResult) {
-	panic("implement me")
+	r = &synchronizeResult{
+		key:       d.key,
+		mode:      d.mode,
+		Succeeded: false,
+		Error:     "",
+	}
+	var (
+		err error
+		ns  = d.key
+	)
+
+	switch d.mode {
+	case diffMode_DELETE:
+		err = s.apollo.DeleteNamespaceItem(
+			ctx, s.scope.ApolloAppID, s.scope.ApolloEnv, s.scope.ApolloClusterName, ns, "content")
+	case diffMode_CREATE:
+		ext := filepath.Ext(d.key)                      // .ext .json .yaml
+		namespaceName := strings.TrimSuffix(d.key, ext) // pure filename without ext
+		format := strings.TrimPrefix(ext, ".")          // json, yaml
+
+		bytes, err2 := os.ReadFile(d.absFilepath)
+		if err2 != nil {
+			err = err2
+			goto Failed
+		}
+		_, err = s.apollo.CreateNamespace(ctx,
+			namespaceName, s.scope.ApolloAppID, openapi.Format(format), false, "created by apollo-synchronizer")
+		if err != nil {
+			goto Failed
+		}
+		_, err = s.apollo.CreateNamespaceItem(
+			ctx, s.scope.ApolloAppID, s.scope.ApolloEnv, s.scope.ApolloClusterName, ns, "content", string(bytes))
+		if err != nil {
+			goto Failed
+		}
+		// TODO(@yeqown): auto publish
+	case diffMode_MODIFY:
+		bytes, err2 := os.ReadFile(d.absFilepath)
+		if err2 != nil {
+			err = err2
+			goto Failed
+		}
+
+		_, err = s.apollo.UpdateNamespaceItem(
+			ctx, s.scope.ApolloAppID, s.scope.ApolloEnv, s.scope.ApolloClusterName, ns, "content", string(bytes))
+		if err != nil {
+			goto Failed
+		}
+		// TODO(@yeqown): auto publish
+	}
+
+Failed:
+	if err != nil {
+		r.Error = err.Error()
+		return
+	} else {
+		r.Succeeded = true
+	}
+
+	return
 }
 
 // decide confirm synchronize or cancel.
