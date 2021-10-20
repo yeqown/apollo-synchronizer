@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"path"
 
 	"github.com/pkg/errors"
 
@@ -78,9 +79,9 @@ var flags = []cli.Flag{
 	&cli.StringFlag{
 		Name:        "path",
 		Usage:       "specify the path to synchronize",
-		TakesFile:   true,
-		Required:    true,
-		DefaultText: "",
+		TakesFile:   false,
+		Value:       defaultPath(),
+		DefaultText: defaultPath(),
 	},
 	//&cli.StringSliceFlag{
 	//	Name:      "file",
@@ -129,4 +130,9 @@ var flags = []cli.Flag{
 
 var commands = []*cli.Command{
 	genToolCommand(),
+}
+
+func defaultPath() string {
+	home, _ := os.UserHomeDir()
+	return path.Join(home, ".apollo-synchronizer")
 }

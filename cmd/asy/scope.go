@@ -110,7 +110,9 @@ func tryFromContext(ctx *cli.Context, scope *internal.SynchronizeScope) {
 
 	// local filesystem
 	scope.Path = ctx.String("path")
-	scope.Path, _ = filepath.Abs(scope.Path)
+	if !path.IsAbs(scope.Path) {
+		scope.Path, _ = filepath.Abs(scope.Path)
+	}
 	switch scope.Mode {
 	case internal.SynchronizeMode_UPLOAD:
 		if scope.Path == "" {
@@ -136,7 +138,7 @@ func tryFromContext(ctx *cli.Context, scope *internal.SynchronizeScope) {
 func travelDirectory(root string, recursive bool) []string {
 	files, err := os.ReadDir(root)
 	if err != nil {
-		log.Fatal("failed to travelDirectory: %v", err)
+		log.Fatalf("failed to travelDirectory: %v", err)
 	}
 
 	out := make([]string, 0, len(files))
