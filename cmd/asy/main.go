@@ -79,14 +79,15 @@ var flags = []cli.Flag{
 		Name:        "path",
 		Usage:       "specify the path to synchronize",
 		TakesFile:   true,
+		Required:    true,
 		DefaultText: "",
 	},
-	&cli.StringSliceFlag{
-		Name:      "file",
-		Usage:     "specify files to synchronize",
-		FilePath:  ".",
-		TakesFile: true,
-	},
+	//&cli.StringSliceFlag{
+	//	Name:      "file",
+	//	Usage:     "specify files to synchronize",
+	//	FilePath:  ".",
+	//	TakesFile: true,
+	//},
 	&cli.StringFlag{
 		Name:  "apollo.portaladdr",
 		Usage: "apollo portal address",

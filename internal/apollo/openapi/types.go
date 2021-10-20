@@ -36,9 +36,9 @@ type ClusterInfo struct {
 // NamespaceInfo
 // generated from https://mholt.github.io/json-to-go/
 type NamespaceInfo struct {
-	Name                       string `json:"name"`
+	Name                       string `json:"namespaceName"`
 	AppID                      string `json:"appId"`
-	Format                     string `json:"format"`
+	Format                     Format `json:"format"`
 	IsPublic                   bool   `json:"isPublic"`
 	Comment                    string `json:"comment"`
 	DataChangeCreatedBy        string `json:"dataChangeCreatedBy"`

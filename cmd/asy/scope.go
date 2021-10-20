@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/yeqown/apollo-synchronizer/internal"
 
@@ -109,6 +110,7 @@ func tryFromContext(ctx *cli.Context, scope *internal.SynchronizeScope) {
 
 	// local filesystem
 	scope.Path = ctx.String("path")
+	scope.Path, _ = filepath.Abs(scope.Path)
 	switch scope.Mode {
 	case internal.SynchronizeMode_UPLOAD:
 		if scope.Path == "" {
@@ -120,6 +122,14 @@ func tryFromContext(ctx *cli.Context, scope *internal.SynchronizeScope) {
 	case internal.SynchronizeMode_DOWNLOAD:
 		// use path only
 		scope.Path = path.Join(scope.Path, scope.ApolloAppID)
+		scope.LocalFiles = travelDirectory(scope.Path, false)
+	}
+
+	var err error
+	for idx, f := range scope.LocalFiles {
+		if scope.LocalFiles[idx], err = filepath.Abs(f); err != nil {
+			log.Fatal("stat file failed: %s", f)
+		}
 	}
 }
 
@@ -135,7 +145,7 @@ func travelDirectory(root string, recursive bool) []string {
 			continue
 		}
 
-		out = append(out, fp.Name())
+		out = append(out, filepath.Join(root, fp.Name()))
 	}
 
 	return out
