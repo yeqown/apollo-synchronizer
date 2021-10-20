@@ -8,7 +8,7 @@ type Client interface {
 	ListEnvClusters(ctx context.Context, appId string) ([]EnvClusters, error)
 	CreateCluster(ctx context.Context, name, appId string) (*ClusterInfo, error)
 
-	ListNamespaces(ctx context.Context)
+	ListNamespaces(ctx context.Context, appId, env, clusterName string) ([]NamespaceInfo, error)
 	CreateNamespace(
 		ctx context.Context, name, appId string, format Format, isPublic bool, comment string) (*NamespaceInfo, error)
 	GetNamespaceItem(ctx context.Context, key, value string)
