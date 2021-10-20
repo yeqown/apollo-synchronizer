@@ -17,5 +17,8 @@ go.sum
 
 # debug and test files
 testdata/
+debugdata/
 .idea/
 .vscode/
+asy
+!asy/

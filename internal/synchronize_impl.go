@@ -19,8 +19,14 @@ type synchronizer struct {
 	apollo openapi.Client
 }
 
-func NewSynchronizer() Synchronizer {
-	return synchronizer{}
+func NewSynchronizer(token, portalAddress, account string) Synchronizer {
+	return synchronizer{
+		apollo: openapi.New(&openapi.Config{
+			Token:         token,
+			PortalAddress: portalAddress,
+			Account:       account,
+		}),
+	}
 }
 
 // Synchronize scheduling components to display information and execute CURD action with resources.
@@ -57,7 +63,7 @@ func (s synchronizer) Synchronize(ctx context.Context, scope *SynchronizeScope) 
 		return nil
 	}
 
-	syncResults := s.doSynchronize(scope, scope.LocalFiles, namespaces)
+	syncResults := s.doSynchronize(scope, diffs)
 	s.renderSynchronizeResult(syncResults)
 	return nil
 }
@@ -87,10 +93,10 @@ func (s synchronizer) compare(localFiles []string, namespaces []string) []diff {
 }
 
 // doSynchronize execute synchronization between local and remote.
-func (s synchronizer) doSynchronize(scope *SynchronizeScope, localFiles []string, namespaces []string) []string {
+func (s synchronizer) doSynchronize(scope *SynchronizeScope, diffs []diff) []string {
 	switch scope.Mode {
-	case DOWNLOAD:
-	case UPLOAD:
+	case SynchronizeMode_DOWNLOAD:
+	case SynchronizeMode_UPLOAD:
 	default:
 		panic("invalid mode: " + strconv.Itoa(int(scope.Mode)))
 	}
