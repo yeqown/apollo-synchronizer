@@ -3,10 +3,10 @@ package openapi
 import (
 	"context"
 	"strings"
-
-	"github.com/pkg/errors"
+	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -92,7 +92,7 @@ func (o openapiClient) ListNamespaces(ctx context.Context, appId, env, clusterNa
 
 func (o openapiClient) CreateNamespace(
 	ctx context.Context, name, appId string, format Format, isPublic bool, comment string) (*NamespaceInfo, error) {
-	uri := expand("${portalAddress}/openapi/v1/apps/{appId}/appnamespaces", map[string]string{
+	uri := expand("${portalAddress}/openapi/v1/apps/${appId}/appnamespaces", map[string]string{
 		"portalAddress": o.config.PortalAddress,
 		"appId":         appId,
 	})
@@ -119,7 +119,7 @@ func (o openapiClient) CreateNamespace(
 		SetContext(ctx).
 		SetBody(body).
 		SetResult(&result).
-		Get(uri)
+		Post(uri)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to ListNamespaces in openapiClient.ListNamespaces")
 	}
@@ -131,22 +131,214 @@ func (o openapiClient) CreateNamespace(
 	return result, nil
 }
 
-func (o openapiClient) GetNamespaceItem(ctx context.Context, key, value string) {
-	panic("implement me")
+func (o openapiClient) PublishNamespace(
+	ctx context.Context, appId, env, cluster, namespace string) (*PublishNamespaceResult, error) {
+	uri := expand("${portalAddress}/openapi/v1/envs/${env}/apps/${appId}/clusters/${clusterName}/"+
+		"namespaces/${namespaceName}/releases", map[string]string{
+		"portalAddress": o.config.PortalAddress,
+		"env":           env,
+		"appId":         appId,
+		"clusterName":   cluster,
+		"namespaceName": namespace,
+	})
+
+	body := struct {
+		ReleaseTitle   string `json:"releaseTitle"`
+		ReleaseComment string `json:"releaseComment"`
+		ReleasedBy     string `json:"releasedBy"`
+	}{
+		ReleaseTitle:   time.Now().Format(time.RFC3339) + "-release",
+		ReleaseComment: "apollo-synchronizer automatically publish",
+		ReleasedBy:     o.config.Account,
+	}
+
+	result := new(PublishNamespaceResult)
+	r, err := o.cc.
+		R().
+		SetContext(ctx).
+		SetQueryParam("createIfNotExists", "false").
+		SetBody(body).
+		SetResult(&result).
+		Post(uri)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to PublishNamespace in openapiClient.PublishNamespace")
+	}
+
+	if err = handleResponseError(r); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+
 }
 
-func (o openapiClient) CreateNamespaceItem(ctx context.Context, key, value string) {
-	panic("implement me")
+func (o openapiClient) DeleteNamespace(ctx context.Context, appId, env, cluster, namespace string) error {
+	uri := expand("${portalAddress}/openapi/v1/envs/${env}/apps/${appId}/clusters/${clusterName}/"+
+		"namespaces/${namespaceName}", map[string]string{
+		"portalAddress": o.config.PortalAddress,
+		"env":           env,
+		"appId":         appId,
+		"clusterName":   cluster,
+		"namespaceName": namespace,
+	})
+
+	r, err := o.cc.
+		R().
+		SetContext(ctx).
+		Delete(uri)
+	if err != nil {
+		return errors.Wrap(err, "failed to DeleteNamespace in openapiClient.DeleteNamespace")
+	}
+
+	if err = handleResponseError(r); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (o openapiClient) UpdateNamespaceItem(ctx context.Context, key, value string) {
-	panic("implement me")
+func (o openapiClient) GetNamespaceItem(
+	ctx context.Context, appId, env, cluster, namespace, key string) (*NamespaceItem, error) {
+
+	uri := expand("${portalAddress}/openapi/v1/envs/${env}/apps/${appId}/clusters/"+
+		"${clusterName}/namespaces/${namespaceName}/items/${key}", map[string]string{
+		"portalAddress": o.config.PortalAddress,
+		"env":           env,
+		"appId":         appId,
+		"clusterName":   cluster,
+		"namespaceName": namespace,
+		"key":           key,
+	})
+
+	result := new(NamespaceItem)
+	r, err := o.cc.
+		R().
+		SetContext(ctx).
+		SetResult(&result).
+		Get(uri)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to GetNamespaceItem in openapiClient.GetNamespaceItem")
+	}
+
+	if err = handleResponseError(r); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
-func (o openapiClient) DeleteNamespaceItem(ctx context.Context) {
-	panic("implement me")
+func (o openapiClient) CreateNamespaceItem(
+	ctx context.Context, appId, env, cluster, namespace, key, value string) (*NamespaceItem, error) {
+
+	uri := expand("${portalAddress}/openapi/v1/envs/${env}/apps/${appId}/clusters/${clusterName}/"+
+		"namespaces/${namespaceName}/items", map[string]string{
+		"portalAddress": o.config.PortalAddress,
+		"env":           env,
+		"appId":         appId,
+		"clusterName":   cluster,
+		"namespaceName": namespace,
+	})
+
+	body := struct {
+		Key                 string `json:"key"`
+		Value               string `json:"value"`
+		Comment             string `json:"comment"`
+		DataChangeCreatedBy string `json:"dataChangeCreatedBy"`
+	}{
+		Key:                 key,
+		Value:               value,
+		Comment:             "apollo-synchronizer auto created",
+		DataChangeCreatedBy: o.config.Account,
+	}
+
+	result := new(NamespaceItem)
+	r, err := o.cc.
+		R().
+		SetContext(ctx).
+		SetBody(body).
+		SetResult(&result).
+		Post(uri)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to GetNamespaceItem in openapiClient.GetNamespaceItem")
+	}
+
+	if err = handleResponseError(r); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
-func (o openapiClient) PublishNamespace(ctx context.Context) {
-	panic("implement me")
+// UpdateNamespaceItem
+// https://github.com/apolloconfig/apollo/wiki/Apollo%E5%BC%80%E6%94%BE%E5%B9%B3%E5%8F%B0
+// #3211-%E4%BF%AE%E6%94%B9%E9%85%8D%E7%BD%AE%E6%8E%A5%E5%8F%A3
+func (o openapiClient) UpdateNamespaceItem(
+	ctx context.Context, appId, env, cluster, namespace, key, value string) (*NamespaceItem, error) {
+
+	uri := expand("${portalAddress}/openapi/v1/envs/${env}/apps/${appId}/clusters/${clusterName}/"+
+		"namespaces/${namespaceName}/items/${key}", map[string]string{
+		"portalAddress": o.config.PortalAddress,
+		"env":           env,
+		"appId":         appId,
+		"clusterName":   cluster,
+		"namespaceName": namespace,
+		"key":           key,
+	})
+
+	body := struct {
+		Key                      string `json:"key"`
+		Value                    string `json:"value"`
+		Comment                  string `json:"comment"`
+		DataChangeLastModifiedBy string `json:"dataChangeLastModifiedBy"`
+	}{
+		Key:                      key,
+		Value:                    value,
+		Comment:                  "apollo-synchronizer auto modified",
+		DataChangeLastModifiedBy: o.config.Account,
+	}
+
+	result := new(NamespaceItem)
+	r, err := o.cc.
+		R().
+		SetContext(ctx).
+		SetQueryParam("createIfNotExists", "false").
+		SetBody(body).
+		SetResult(&result).
+		Put(uri)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to UpdateNamespaceItem in openapiClient.UpdateNamespaceItem")
+	}
+
+	if err = handleResponseError(r); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (o openapiClient) DeleteNamespaceItem(ctx context.Context, appId, env, cluster, namespace, key string) error {
+	uri := expand("${portalAddress}/openapi/v1/envs/${env}/apps/${appId}/clusters/${clusterName}/"+
+		"namespaces/${namespaceName}/items/${key}?operator=${operator}", map[string]string{
+		"portalAddress": o.config.PortalAddress,
+		"env":           env,
+		"appId":         appId,
+		"clusterName":   cluster,
+		"namespaceName": namespace,
+		"key":           key,
+		"operator":      o.config.Account,
+	})
+
+	r, err := o.cc.
+		R().
+		SetContext(ctx).
+		Delete(uri)
+	if err != nil {
+		return errors.Wrap(err, "failed to DeleteNamespaceItem in openapiClient.DeleteNamespaceItem")
+	}
+
+	if err = handleResponseError(r); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -57,3 +57,17 @@ type NamespaceItem struct {
 	DataChangeCreatedTime      string `json:"dataChangeCreatedTime"`
 	DataChangeLastModifiedTime string `json:"dataChangeLastModifiedTime"`
 }
+
+// PublishNamespaceResult
+// generated from https://mholt.github.io/json-to-go/
+type PublishNamespaceResult struct {
+	AppID                      string `json:"appId"`
+	ClusterName                string `json:"clusterName"`
+	NamespaceName              string `json:"namespaceName"`
+	Name                       string `json:"name"`
+	Comment                    string `json:"comment"`
+	DataChangeCreatedBy        string `json:"dataChangeCreatedBy"`
+	DataChangeLastModifiedBy   string `json:"dataChangeLastModifiedBy"`
+	DataChangeCreatedTime      string `json:"dataChangeCreatedTime"`
+	DataChangeLastModifiedTime string `json:"dataChangeLastModifiedTime"`
+}

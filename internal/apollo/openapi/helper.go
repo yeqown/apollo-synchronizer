@@ -1,11 +1,12 @@
 package openapi
 
 import (
+	"encoding/json"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/pkg/errors"
 	"github.com/yeqown/log"
 )
 
@@ -46,6 +47,19 @@ func expand(uri string, input map[string]string) string {
 	return out
 }
 
+type Exception struct {
+	Exception string `json:"exception"`
+	Message   string `json:"message"`
+	// FIXED(@yeqown): status in response body is float. ops!
+	// use http response status code as instead.
+	Status    int    `json:"-"`
+	Timestamp string `json:"timestamp"`
+}
+
+func (e Exception) Error() string {
+	return strconv.Itoa(e.Status) + ": " + e.Message
+}
+
 func handleResponseError(r *resty.Response) error {
 	if r == nil {
 		return nil
@@ -55,20 +69,17 @@ func handleResponseError(r *resty.Response) error {
 		return nil
 	}
 
-	switch r.StatusCode() {
-	case http.StatusBadRequest:
-		return errors.New("Bad Request")
-	case http.StatusUnauthorized:
-		return errors.New("Unauthorized")
-	case http.StatusForbidden:
-		return errors.New("Forbidden")
-	case http.StatusNotFound:
-		return errors.New("Not Found")
-	case http.StatusMethodNotAllowed:
-		return errors.New("Method not Allowed")
-	case http.StatusInternalServerError:
-		return errors.New("Internal Server Error")
+	e := new(Exception)
+	if err := json.Unmarshal(r.Body(), e); err != nil {
+		log.
+			WithFields(log.Fields{
+				"rawBody": string(r.Body()),
+				"err":     err,
+			}).
+			Error("handleResponseError could not unmarshal Exception")
+		return nil
 	}
+	e.Status = r.StatusCode()
 
-	return nil
+	return e
 }
