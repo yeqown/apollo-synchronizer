@@ -2,42 +2,50 @@ package internal
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"path/filepath"
-	"strconv"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/yeqown/log"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/yeqown/apollo-synchronizer/internal/apollo/openapi"
 )
 
 var (
-	_ Synchronizer = synchronizer{}
+	_ Synchronizer = new(synchronizer)
 )
 
 type synchronizer struct {
 	apollo openapi.Client
+
+	// scope injected from Synchronize.
+	scope *SynchronizeScope
 }
 
 func NewSynchronizer(token, portalAddress, account string) Synchronizer {
-	return synchronizer{
+	return &synchronizer{
 		apollo: openapi.New(&openapi.Config{
 			Token:         token,
 			PortalAddress: portalAddress,
 			Account:       account,
 		}),
+		scope: nil,
 	}
 }
 
 // Synchronize scheduling components to display information and execute CURD action with resources.
 // NOTICE: properties will be ignored.
-func (s synchronizer) Synchronize(ctx context.Context, scope *SynchronizeScope) error {
+func (s *synchronizer) Synchronize(ctx context.Context, scope *SynchronizeScope) error {
 	// permit scope
 	log.
 		WithFields(log.Fields{
 			"scope": scope,
 		}).
 		Debug("enter synchronizer.Synchronize")
+	s.scope = scope
 
 	// load app/env/cluster/namespaces info
 	namespaceInfos, err := s.apollo.ListNamespaces(ctx, scope.ApolloAppID, scope.ApolloEnv, scope.ApolloClusterName)
@@ -156,8 +164,15 @@ func (s synchronizer) compare(
 	return diffs
 }
 
+type synchronizeResult struct {
+	key       string
+	mode      diffMode
+	Succeeded bool
+	Error     string
+}
+
 // doSynchronize execute synchronization between local and remote.
-func (s synchronizer) doSynchronize(scope *SynchronizeScope, diffs []diff) []string {
+func (s synchronizer) doSynchronize(scope *SynchronizeScope, diffs []diff) []*synchronizeResult {
 	log.
 		WithFields(log.Fields{
 			"mode":  scope.Mode,
@@ -165,14 +180,89 @@ func (s synchronizer) doSynchronize(scope *SynchronizeScope, diffs []diff) []str
 		}).
 		Debug("doSynchronize")
 
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+	eg, ctx2 := errgroup.WithContext(ctx)
+
+	var (
+		resultCh = make(chan *synchronizeResult, len(diffs))
+		done     = make(chan struct{})
+		results  = make([]*synchronizeResult, 0, len(diffs))
+	)
+
+	go func() {
+		for result := range resultCh {
+			results = append(results, result)
+		}
+		done <- struct{}{}
+	}()
+
 	switch scope.Mode {
 	case SynchronizeMode_DOWNLOAD:
+		for idx := range diffs {
+			d := diffs[idx]
+			eg.Go(func() error {
+				result := s.download(ctx2, d)
+				resultCh <- result
+				return nil
+			})
+		}
 	case SynchronizeMode_UPLOAD:
-	default:
-		panic("invalid mode: " + strconv.Itoa(int(scope.Mode)))
+		for idx := range diffs {
+			d := diffs[idx]
+			eg.Go(func() error {
+				result := s.upload(ctx2, d)
+				resultCh <- result
+				return nil
+			})
+		}
+	}
+	if err := eg.Wait(); err != nil {
+		log.Fatal(err)
+	}
+	close(resultCh)
+	<-done
+
+	return results
+}
+
+func (s synchronizer) download(ctx context.Context, d diff) (r *synchronizeResult) {
+	r = &synchronizeResult{
+		key:       d.key,
+		mode:      d.mode,
+		Succeeded: false,
+		Error:     "",
+	}
+	var err error
+
+	switch d.mode {
+	case diffMode_DELETE:
+		err = os.Remove(d.absFilepath)
+	case diffMode_CREATE:
+		fallthrough
+	case diffMode_MODIFY:
+		item, err2 := s.apollo.GetNamespaceItem(
+			ctx, s.scope.ApolloAppID, s.scope.ApolloEnv, s.scope.ApolloClusterName, d.key, "content")
+		if err2 != nil {
+			err = err2
+			goto Failed
+		}
+		err = os.WriteFile(d.absFilepath, []byte(item.Value), 0644)
 	}
 
-	return []string{"TODO"}
+Failed:
+	if err != nil {
+		r.Error = err.Error()
+		return
+	} else {
+		r.Succeeded = true
+	}
+
+	return
+}
+
+func (s synchronizer) upload(ctx context.Context, d diff) (r *synchronizeResult) {
+	panic("implement me")
 }
 
 // decide confirm synchronize or cancel.
@@ -188,5 +278,12 @@ func (s synchronizer) renderDiff(diffs []diff) decide {
 	return Decide_CONFIRMED
 }
 
-func (s synchronizer) renderSynchronizeResult([]string) {
+func (s synchronizer) renderSynchronizeResult(results []*synchronizeResult) {
+	for _, result := range results {
+		if result.Succeeded {
+			fmt.Printf("mode=%s, key=%s, success=%v\n", result.mode, result.key, result.Succeeded)
+		} else {
+			fmt.Printf("mode=%s, key=%s, failed=%s\n", result.mode, result.key, result.Error)
+		}
+	}
 }
