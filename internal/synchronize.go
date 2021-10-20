@@ -21,7 +21,7 @@ const (
 // SynchronizeScope represents the context of Synchronizer.Synchronize.
 type SynchronizeScope struct {
 	Mode SynchronizeMode
-	// Path is the parent directory which holds all downloaded namespaces.
+	// Path is the parent directory which holds all downloaded remote.
 	// apollo.appid will be used as a sub-directory. [DOWNLOAD REQUIRED]
 	Path string
 	// LocalFiles represents the absolute file path of local files. [UPLOAD ONLY]

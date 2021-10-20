@@ -6,7 +6,7 @@ Help developer to sync between local file and remote apollo portal web since por
 - [x] download namespaces into local directory.
 - [x] synchronize local files to remote apollo portal web.
 - [ ] use terminal ui to display synchronization information.
-- [ ] apply `force` and `overwrite` flag
+- [x] apply `force` and `overwrite` flag
 - [ ] maybe some customize filter to dismiss some file/namespace?
 
 ### Quick start
