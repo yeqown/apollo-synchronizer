@@ -22,6 +22,49 @@ func fillSynchronizeScope(ctx *cli.Context) (scope *internal.SynchronizeScope) {
 	tryFromFile(cwd, scope)
 	tryFromContext(ctx, scope)
 
+	if !path.IsAbs(scope.Path) {
+		scope.Path, _ = filepath.Abs(scope.Path)
+	}
+	scope.Path = path.Join(scope.Path, scope.ApolloAppID)
+	if scope.Mode == internal.SynchronizeMode_DOWNLOAD {
+		fi, err := os.Stat(scope.Path)
+		if err == nil && !fi.IsDir() {
+			log.Fatalf("%s is not a directory", scope.Path)
+		}
+
+		if err != nil {
+			if !os.IsNotExist(err) {
+				log.Fatal("%s stat failed", scope.Path)
+			}
+
+			if err = os.MkdirAll(scope.Path, 0755); err != nil {
+				log.Fatal("create directory(%s) failed: %v", scope.Path, err)
+			}
+		}
+	}
+	scope.LocalFiles = travelDirectory(scope.Path, false)
+
+	//switch scope.Mode {
+	//case internal.SynchronizeMode_UPLOAD:
+	//	if scope.Path == "" {
+	//		scope.LocalFiles = ctx.StringSlice("file")
+	//	} else {
+	//		scope.Path = path.Join(scope.Path, scope.ApolloAppID)
+	//		scope.LocalFiles = travelDirectory(scope.Path, false)
+	//	}
+	//case internal.SynchronizeMode_DOWNLOAD:
+	//	// use path only
+	//	scope.Path = path.Join(scope.Path, scope.ApolloAppID)
+	//	scope.LocalFiles = travelDirectory(scope.Path, false)
+	//}
+
+	var err error
+	for idx, f := range scope.LocalFiles {
+		if scope.LocalFiles[idx], err = filepath.Abs(f); err != nil {
+			log.Fatal("stat file failed: %s", f)
+		}
+	}
+
 	log.
 		WithFields(log.Fields{
 			"cwd":   cwd,
@@ -110,29 +153,6 @@ func tryFromContext(ctx *cli.Context, scope *internal.SynchronizeScope) {
 
 	// local filesystem
 	scope.Path = ctx.String("path")
-	if !path.IsAbs(scope.Path) {
-		scope.Path, _ = filepath.Abs(scope.Path)
-	}
-	switch scope.Mode {
-	case internal.SynchronizeMode_UPLOAD:
-		if scope.Path == "" {
-			scope.LocalFiles = ctx.StringSlice("file")
-		} else {
-			scope.Path = path.Join(scope.Path, scope.ApolloAppID)
-			scope.LocalFiles = travelDirectory(scope.Path, false)
-		}
-	case internal.SynchronizeMode_DOWNLOAD:
-		// use path only
-		scope.Path = path.Join(scope.Path, scope.ApolloAppID)
-		scope.LocalFiles = travelDirectory(scope.Path, false)
-	}
-
-	var err error
-	for idx, f := range scope.LocalFiles {
-		if scope.LocalFiles[idx], err = filepath.Abs(f); err != nil {
-			log.Fatal("stat file failed: %s", f)
-		}
-	}
 }
 
 func travelDirectory(root string, recursive bool) []string {
