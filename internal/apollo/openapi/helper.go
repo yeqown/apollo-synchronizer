@@ -21,6 +21,16 @@ const (
 	Format_TEXT       Format = "txt"
 )
 
+// NotAllowedFormat use whitelist for allowed formats.
+func NotAllowedFormat(ext Format) bool {
+	switch ext {
+	case Format_TEXT, Format_JSON, Format_XML, Format_YAML, Format_YML:
+		return false
+	}
+
+	return true
+}
+
 func getMapper(input map[string]string) func(k string) string {
 	return func(k string) string {
 		v, ok := input[k]

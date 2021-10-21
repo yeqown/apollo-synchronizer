@@ -55,8 +55,8 @@ func (s *synchronizer) Synchronize(ctx context.Context, scope *SynchronizeScope)
 	}
 	namespaces := make([]string, 0, len(namespaceInfos))
 	for _, v := range namespaceInfos {
-		if v.Format == openapi.Format_Properties {
-			// skip properties format
+		if openapi.NotAllowedFormat(v.Format) {
+			// filter properties
 			continue
 		}
 
@@ -65,10 +65,11 @@ func (s *synchronizer) Synchronize(ctx context.Context, scope *SynchronizeScope)
 
 	files := make([]string, 0, len(scope.LocalFiles))
 	for _, v := range scope.LocalFiles {
-		if filepath.Ext(v) == string(openapi.Format_Properties) {
-			// skip properties format
+		if openapi.NotAllowedFormat(openapi.Format(filepath.Ext(v))) {
+			// filter unsupported filetypes by apollo
 			continue
 		}
+
 		files = append(files, filepath.Base(v))
 	}
 
