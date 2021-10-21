@@ -3,6 +3,7 @@ package internal
 import (
 	"errors"
 	"fmt"
+	"image"
 	"strconv"
 
 	ui "github.com/gizak/termui/v3"
@@ -76,6 +77,9 @@ PortalAddress: %s
 	l3.TitleStyle = ui.NewStyle(ui.ColorCyan)
 	l3.Title = "Absolute Path"
 
+	dire := widgets.NewImage(directionImage(x/6+1, 2*y/4+1, 2*x/6+1, 3*y/4+1, t.scope.Mode))
+	dire.Border = false
+
 	for _, d := range diffs {
 		l3.Rows = append(l3.Rows, d.absFilepath)
 		switch d.mode {
@@ -91,11 +95,12 @@ PortalAddress: %s
 		}
 	}
 
-	l1.SetRect(0, y/4+1, x/4+1, y)
-	l2.SetRect(x/4+1, y/4+1, 2*x/4+1, y)
-	l3.SetRect(2*x/4+1, y/4+1, x, y)
+	l1.SetRect(0, y/4+1, x/6+1, y)
+	dire.SetRect(x/6+1, 2*y/4+1, 2*x/6+1, 3*y/4+1)
+	l2.SetRect(2*x/6+1, y/4+1, 3*x/6+1, y)
+	l3.SetRect(3*x/6+1, y/4+1, x, y)
 
-	ui.Render(p, l1, l2, l3)
+	ui.Render(p, l1, dire, l2, l3)
 	if err := t.wait(); err != nil {
 		if errors.Is(err, errEnter) {
 			return Decide_CONFIRMED
@@ -139,4 +144,11 @@ func (t termuiRenderer) renderingResult(results []*synchronizeResult) {
 
 	ui.Render(tb)
 	_ = t.wait()
+}
+
+// draw arrow direction (left arrow, right arrow) image
+func directionImage(x1, y1, x2, y2 int, mode SynchronizeMode) image.Image {
+	img := image.NewGray(image.Rect(x1, y1, x2, y2))
+	// TODO(@yeqown) draw the arrow
+	return img
 }

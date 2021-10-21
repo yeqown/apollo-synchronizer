@@ -61,7 +61,7 @@ func Test_renderer_terminal(t *testing.T) {
 
 func Test_renderer_termui(t *testing.T) {
 	r := newTermUI(&SynchronizeScope{
-		Mode:              0,
+		Mode:              SynchronizeMode_DOWNLOAD,
 		Path:              "",
 		LocalFiles:        nil,
 		ApolloSecret:      "",
