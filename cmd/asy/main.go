@@ -73,8 +73,10 @@ var flags = []cli.Flag{
 		Usage:   "indicates whether to create the target while it not exists.",
 	},
 	&cli.BoolFlag{
-		Name:  "overwrite",
-		Usage: "indicates whether asy update the target while it exists.",
+		Name:        "overwrite",
+		Usage:       "indicates whether asy update the target while it exists.",
+		DefaultText: "true",
+		Value:       true,
 	},
 	&cli.StringFlag{
 		Name:        "path",
