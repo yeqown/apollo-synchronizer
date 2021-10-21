@@ -33,6 +33,9 @@ type SynchronizeScope struct {
 	ApolloClusterName string
 	ApolloPortalAddr  string
 	ApolloAccount     string
+	// ApolloAutoPublish indicates whether publish changes after uploaded to apollo namespaces.
+	// it's disabled by default.
+	ApolloAutoPublish bool
 
 	// Overwrite indicates whether asy update the target while it exists.
 	Overwrite bool

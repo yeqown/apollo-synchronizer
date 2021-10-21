@@ -150,6 +150,7 @@ func tryFromContext(ctx *cli.Context, scope *internal.SynchronizeScope) {
 	scope.ApolloClusterName = ctx.String("apollo.cluster")
 	scope.ApolloPortalAddr = ctx.String("apollo.portaladdr")
 	scope.ApolloAccount = ctx.String("apollo.account")
+	scope.ApolloAutoPublish = ctx.Bool("auto-publish")
 
 	// local filesystem
 	scope.Path = ctx.String("path")

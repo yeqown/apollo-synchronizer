@@ -141,8 +141,9 @@ func (s synchronizer) compare(
 type synchronizeResult struct {
 	key       string
 	mode      diffMode
-	Succeeded bool
-	Error     string
+	error     string // modified failed reason
+	succeeded bool   // modified succeeded
+	published bool   // changes published
 }
 
 // doSynchronize execute synchronization between local and remote.
@@ -185,7 +186,7 @@ func (s synchronizer) doSynchronize(scope *SynchronizeScope, diffs []diff1) []*s
 		for idx := range diffs {
 			d := diffs[idx]
 			eg.Go(func() error {
-				result := s.upload(ctx2, d)
+				result := s.upload(ctx2, d, scope.ApolloAutoPublish)
 				resultCh <- result
 				return nil
 			})
@@ -204,8 +205,10 @@ func (s synchronizer) download(ctx context.Context, d diff1) (r *synchronizeResu
 	r = &synchronizeResult{
 		key:       d.key,
 		mode:      d.mode,
-		Succeeded: false,
-		Error:     "",
+		error:     "",
+		succeeded: false,
+		// download always published by default since it has no version control mechanism.
+		published: true,
 	}
 	var err error
 
@@ -226,21 +229,22 @@ func (s synchronizer) download(ctx context.Context, d diff1) (r *synchronizeResu
 
 Failed:
 	if err != nil {
-		r.Error = err.Error()
+		r.error = err.Error()
 		return
 	} else {
-		r.Succeeded = true
+		r.succeeded = true
 	}
 
 	return
 }
 
-func (s synchronizer) upload(ctx context.Context, d diff1) (r *synchronizeResult) {
+func (s synchronizer) upload(ctx context.Context, d diff1, autoPublish bool) (r *synchronizeResult) {
 	r = &synchronizeResult{
 		key:       d.key,
 		mode:      d.mode,
-		Succeeded: false,
-		Error:     "",
+		succeeded: false,
+		published: false,
+		error:     "",
 	}
 	var (
 		err error
@@ -271,7 +275,6 @@ func (s synchronizer) upload(ctx context.Context, d diff1) (r *synchronizeResult
 		if err != nil {
 			goto Failed
 		}
-		// TODO(@yeqown): auto publish
 	case diffMode_MODIFY:
 		bytes, err2 := os.ReadFile(d.absFilepath)
 		if err2 != nil {
@@ -284,15 +287,28 @@ func (s synchronizer) upload(ctx context.Context, d diff1) (r *synchronizeResult
 		if err != nil {
 			goto Failed
 		}
-		// TODO(@yeqown): auto publish
+	}
+
+	if autoPublish {
+		if _, err2 := s.apollo.PublishNamespace(
+			ctx, s.scope.ApolloAppID, s.scope.ApolloEnv, s.scope.ApolloClusterName, ns); err2 == nil {
+			r.published = true
+		} else {
+			log.
+				WithFields(log.Fields{
+					"namespace": ns,
+					"app":       s.scope.ApolloAppID,
+				}).
+				Warnf("publish namespace failed: %v", err)
+		}
 	}
 
 Failed:
 	if err != nil {
-		r.Error = err.Error()
+		r.error = err.Error()
 		return
 	} else {
-		r.Succeeded = true
+		r.succeeded = true
 	}
 
 	return
@@ -312,11 +328,11 @@ func (s synchronizer) renderDiff(diffs []diff1) decide {
 }
 
 func (s synchronizer) renderSynchronizeResult(results []*synchronizeResult) {
-	for _, result := range results {
-		if result.Succeeded {
-			fmt.Printf("mode=%s, key=%s, success=%v\n", result.mode, result.key, result.Succeeded)
+	for _, r := range results {
+		if r.succeeded {
+			fmt.Printf("mode=%s, key=%s, success=%v, published=%v\n", r.mode, r.key, r.succeeded, r.published)
 		} else {
-			fmt.Printf("mode=%s, key=%s, failed=%s\n", result.mode, result.key, result.Error)
+			fmt.Printf("mode=%s, key=%s, failed=%s\n, published=%v", r.mode, r.key, r.error, r.published)
 		}
 	}
 }

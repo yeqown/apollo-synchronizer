@@ -23,7 +23,7 @@ func main() {
 		},
 	}
 	app.Description = "To help developers synchronize between apollo portal and local filesystem."
-	app.Version = "v1.1.0"
+	app.Version = "v1.2.0"
 	app.Flags = flags
 	app.Action = action
 	app.Before = before
@@ -121,7 +121,11 @@ var flags = []cli.Flag{
 		Value:       "default",
 		Usage:       "the cluster of target remote app",
 	},
-
+	&cli.BoolFlag{
+		Name:        "auto-publish",
+		DefaultText: "false",
+		Usage:       "enable auto publish apollo modified namespace.",
+	},
 	&cli.BoolFlag{
 		Name:        "debug",
 		Usage:       "print debug logs",
