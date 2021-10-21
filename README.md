@@ -5,7 +5,7 @@ Help developer to sync between local file and remote apollo portal web since por
 
 - [x] download namespaces into local directory.
 - [x] synchronize local files to remote apollo portal web.
-- [ ] use terminal ui to display synchronization information.
+- [x] use terminal ui to display synchronization information.
 - [x] apply `force` and `overwrite` flag
 - [ ] maybe some customize filter to dismiss some file/namespace?
 
@@ -19,12 +19,18 @@ go install github.com/yeqown/apollo-synchronizer/cmd/asy@latest
 
 ```sh
 # synchronize between one app in apollo with local file system.
-$ ./asy -h
+$ asy -h
 NAME:
    apollo-synchronizer - A new cli application
 
 USAGE:
    asy [global options] command [command options] [arguments...]
+
+VERSION:
+   v1.2.0
+
+DESCRIPTION:
+   To help developers synchronize between apollo portal and local filesystem.
 
 AUTHOR:
    yeqown <yeqown@gmail.com>
@@ -37,17 +43,19 @@ GLOBAL OPTIONS:
    --up                       upload to apollo portal with local filesystem (default: false)
    --down                     download from apollo portal (default: true)
    --force, -f                indicates whether to create the target while it not exists. (default: false)
-   --overwrite                indicates whether asy update the target while it exists. (default: false)
-   --path value               specify the path to synchronize
+   --overwrite                indicates whether asy update the target while it exists. (default: true)
+   --enable-termui            use terminal ui to display and interact with instead of logs (default: false)
+   --path value               specify the path to synchronize (default: /Users/med/.apollo-synchronizer)
    --apollo.portaladdr value  apollo portal address
    --apollo.appid value       the targeted remote app in apollo
-   --apollo.secret value      openapi app's token
+   --apollo.secret value      openapi app`s token
    --apollo.account value     user id in apollo (default: apollo)
    --apollo.env value         the environment of target remote app (default: DEV)
    --apollo.cluster value     the cluster of target remote app (default: default)
+   --auto-publish             enable auto publish apollo modified namespace. (default: false)
    --debug                    print debug logs (default: false)
    --help, -h                 show help (default: false)
-   --version, -v              print the version (default: false) 
+   --version, -v              print the version (default: false)
 ```
 
 demo： 
@@ -56,7 +64,10 @@ demo：
 # download configs from apollo [app=demo] [env=DEV] [cluster=default] 
 ./asy \
     --down \
-    --debug --force --overwrite \
+    --debug \ 
+    --force \
+    --overwrite \
+    --enable-termui \
     --path=./debugdata \
     --apollo.portaladdr=http://127.0.0.1:8070 \
     --apollo.appid=demo \
