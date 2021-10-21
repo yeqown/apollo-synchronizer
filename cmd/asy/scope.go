@@ -142,6 +142,7 @@ func tryFromContext(ctx *cli.Context, scope *internal.SynchronizeScope) {
 
 	scope.Force = ctx.Bool("force")
 	scope.Overwrite = ctx.Bool("overwrite")
+	scope.EnableTermUI = ctx.Bool("enable-termui")
 
 	// apollo openapi parameter
 	scope.ApolloSecret = ctx.String("apollo.secret")

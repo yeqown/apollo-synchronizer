@@ -78,6 +78,10 @@ var flags = []cli.Flag{
 		DefaultText: "true",
 		Value:       true,
 	},
+	&cli.BoolFlag{
+		Name:  "enable-termui",
+		Usage: "use terminal ui to display and interact with instead of logs",
+	},
 	&cli.StringFlag{
 		Name:        "path",
 		Usage:       "specify the path to synchronize",

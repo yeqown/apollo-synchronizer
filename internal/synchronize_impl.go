@@ -48,7 +48,11 @@ func (s *synchronizer) Synchronize(ctx context.Context, scope *SynchronizeScope)
 		}).
 		Debug("enter synchronizer.Synchronize")
 	s.scope = scope
+	if scope.EnableTermUI {
+		s.render = newTermUI(scope)
+	}
 
+	log.Info("prepare to fetching remote namespace resources. please wait")
 	// load app/env/cluster/remote info
 	namespaceInfos, err := s.apollo.ListNamespaces(ctx, scope.ApolloAppID, scope.ApolloEnv, scope.ApolloClusterName)
 	if err != nil {
@@ -87,11 +91,15 @@ func (s *synchronizer) Synchronize(ctx context.Context, scope *SynchronizeScope)
 		fallthrough
 	default:
 		// interrupt the synchronization
+		log.Info("you cancel the synchronization. quit")
 		return nil
 	}
 
+	log.Info("synchronizing ...")
 	syncResults := s.doSynchronize(scope, diffs)
+	log.Info("synchronization finished, please check the result")
 	s.render.renderingResult(syncResults)
+
 	return nil
 }
 

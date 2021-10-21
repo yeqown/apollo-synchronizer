@@ -40,7 +40,8 @@ type SynchronizeScope struct {
 	// Overwrite indicates whether asy update the target while it exists.
 	Overwrite bool
 	// Force indicates whether to create the target while it not exists.
-	Force bool
+	Force        bool
+	EnableTermUI bool
 }
 
 func (sc SynchronizeScope) Valid() error {

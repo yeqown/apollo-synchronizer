@@ -60,5 +60,21 @@ func Test_renderer_terminal(t *testing.T) {
 }
 
 func Test_renderer_termui(t *testing.T) {
+	r := newTermUI(&SynchronizeScope{
+		Mode:              0,
+		Path:              "",
+		LocalFiles:        nil,
+		ApolloSecret:      "",
+		ApolloAppID:       "",
+		ApolloEnv:         "",
+		ApolloClusterName: "",
+		ApolloPortalAddr:  "",
+		ApolloAccount:     "",
+		ApolloAutoPublish: false,
+		Overwrite:         false,
+		Force:             false,
+	})
 
+	r.renderingDiffs(_diffs)
+	r.renderingResult(_results)
 }
