@@ -289,18 +289,20 @@ func (o openapiClient) UpdateNamespaceItem(
 		Value                    string `json:"value"`
 		Comment                  string `json:"comment"`
 		DataChangeLastModifiedBy string `json:"dataChangeLastModifiedBy"`
+		DataChangeCreatedBy      string `json:"dataChangeCreatedBy"`
 	}{
 		Key:                      key,
 		Value:                    value,
 		Comment:                  "apollo-synchronizer auto modified",
 		DataChangeLastModifiedBy: o.config.Account,
+		DataChangeCreatedBy:      o.config.Account,
 	}
 
 	result := new(NamespaceItem)
 	r, err := o.cc.
 		R().
 		SetContext(ctx).
-		SetQueryParam("createIfNotExists", "false").
+		SetQueryParam("createIfNotExists", "true").
 		SetBody(body).
 		SetResult(&result).
 		Put(uri)

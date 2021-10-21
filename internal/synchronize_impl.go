@@ -266,7 +266,7 @@ func (s synchronizer) upload(ctx context.Context, d diff1) (r *synchronizeResult
 		if err != nil {
 			goto Failed
 		}
-		_, err = s.apollo.CreateNamespaceItem(
+		_, err = s.apollo.UpdateNamespaceItem(
 			ctx, s.scope.ApolloAppID, s.scope.ApolloEnv, s.scope.ApolloClusterName, ns, "content", string(bytes))
 		if err != nil {
 			goto Failed
