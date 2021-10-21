@@ -3,9 +3,9 @@ package internal
 type diffMode string
 
 const (
-	diffMode_CREATE diffMode = "C"
-	diffMode_MODIFY diffMode = "M"
-	diffMode_DELETE diffMode = "D"
+	diffMode_CREATE diffMode = "C+"
+	diffMode_MODIFY diffMode = "M~"
+	diffMode_DELETE diffMode = "D-"
 )
 
 type diff0 struct {

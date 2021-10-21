@@ -1,4 +1,4 @@
-package termui
+package internal
 
 import (
 	ui "github.com/gizak/termui/v3"

@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,6 +20,7 @@ var (
 
 type synchronizer struct {
 	apollo openapi.Client
+	render renderer
 
 	// scope injected from Synchronize.
 	scope *SynchronizeScope
@@ -33,7 +33,8 @@ func NewSynchronizer(token, portalAddress, account string) Synchronizer {
 			PortalAddress: portalAddress,
 			Account:       account,
 		}),
-		scope: nil,
+		scope:  nil,
+		render: terminalRenderer{},
 	}
 }
 
@@ -65,7 +66,8 @@ func (s *synchronizer) Synchronize(ctx context.Context, scope *SynchronizeScope)
 
 	files := make([]string, 0, len(scope.LocalFiles))
 	for _, v := range scope.LocalFiles {
-		if openapi.NotAllowedFormat(openapi.Format(filepath.Ext(v))) {
+		ext := strings.TrimPrefix(filepath.Ext(v), ".")
+		if openapi.NotAllowedFormat(openapi.Format(ext)) {
 			// filter unsupported filetypes by apollo
 			continue
 		}
@@ -78,18 +80,18 @@ func (s *synchronizer) Synchronize(ctx context.Context, scope *SynchronizeScope)
 	// 2. target resources mode(C/M/D)
 	// 3. local and target resources relationship.
 	diffs := s.compare(scope.Mode, scope.Path, scope.Force, scope.Overwrite, files, namespaces)
-	userDecide := s.renderDiff(diffs)
-
-	switch userDecide {
+	// let user decide what to do next, continue or cancel?
+	switch s.render.renderingDiffs(diffs) {
 	case Decide_CONFIRMED:
 	case Decide_CANCELLED:
 		fallthrough
 	default:
+		// interrupt the synchronization
 		return nil
 	}
 
 	syncResults := s.doSynchronize(scope, diffs)
-	s.renderSynchronizeResult(syncResults)
+	s.render.renderingResult(syncResults)
 	return nil
 }
 
@@ -313,27 +315,4 @@ Failed:
 	}
 
 	return
-}
-
-// decide confirm synchronize or cancel.
-type decide uint8
-
-const (
-	Decide_UNKNOWN decide = iota
-	Decide_CONFIRMED
-	Decide_CANCELLED
-)
-
-func (s synchronizer) renderDiff(diffs []diff1) decide {
-	return Decide_CONFIRMED
-}
-
-func (s synchronizer) renderSynchronizeResult(results []*synchronizeResult) {
-	for _, r := range results {
-		if r.succeeded {
-			fmt.Printf("mode=%s, key=%s, success=%v, published=%v\n", r.mode, r.key, r.succeeded, r.published)
-		} else {
-			fmt.Printf("mode=%s, key=%s, failed=%s\n, published=%v", r.mode, r.key, r.error, r.published)
-		}
-	}
 }
