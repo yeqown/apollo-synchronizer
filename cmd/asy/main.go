@@ -23,7 +23,7 @@ func main() {
 		},
 	}
 	app.Description = "To help developers synchronize between apollo portal and local filesystem."
-	app.Version = "v1.2.0"
+	app.Version = "v1.2.1"
 	app.Flags = flags
 	app.Action = action
 	app.Before = before
