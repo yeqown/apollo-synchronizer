@@ -6,7 +6,6 @@ import (
 	"path"
 
 	"github.com/pkg/errors"
-
 	"github.com/urfave/cli/v2"
 	"github.com/yeqown/log"
 

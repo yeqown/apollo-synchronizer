@@ -74,14 +74,12 @@ PortalAddress: %s
 	p0.Border = true
 	p0.Title = "synchronize settings"
 	p0.TitleStyle = ui.NewStyle(ui.ColorCyan)
-	p0.SetRect(0, 0, x/2+1, y/4+1)
 
 	p1 := widgets.NewParagraph()
 	p1.Text = "Press [Enter] to continue, [^C] to quit, other keys to cancel"
 	p1.Title = "Tips"
 	p1.TitleStyle = ui.NewStyle(ui.ColorCyan)
 	//p1.TextStyle =
-	p1.SetRect(x/2+1, 0, x, y/4+1)
 
 	l1 := widgets.NewList()
 	l1.Title = "Local"
@@ -108,10 +106,10 @@ PortalAddress: %s
 	p2.Border = false
 	switch t.scope.Mode {
 	case SynchronizeMode_DOWNLOAD:
-		p2.Text = `      ⬅️⬅️`
+		p2.Text = `⬅️⬅️`
 
 	case SynchronizeMode_UPLOAD:
-		p2.Text = "      ➡️➡️"
+		p2.Text = "➡️➡️"
 	}
 
 	for idx, d := range diffs {
@@ -137,9 +135,11 @@ PortalAddress: %s
 		l3.Rows = append(l3.Rows, d.absFilepath)
 	}
 
-	l1.SetRect(0, y/4+1, x/6+1, y)
-	p2.SetRect(x/6+1, 2*y/4+1, 2*x/6+1, 3*y/4+1)
-	l2.SetRect(2*x/6+1, y/4+1, 3*x/6+1, y)
+	p0.SetRect(0, 0, x/2+1, y/4+1)
+	p1.SetRect(x/2+1, 0, x, y/4+1)
+	l1.SetRect(0, y/4+1, 3*x/16+1, y)
+	p2.SetRect(7*x/32+1, 2*y/4+1, 9*x/32+1, 3*y/4+1) // arrow
+	l2.SetRect(5*x/16+1, y/4+1, 8*x/16+1, y)
 	l3.SetRect(3*x/6+1, y/4+1, x, y)
 
 	ui.Render(p0, p1, l1, p2, l2, l3)
