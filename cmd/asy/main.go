@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path"
+	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
@@ -141,7 +142,16 @@ var commands = []*cli.Command{
 	genToolCommand(),
 }
 
+var (
+	_defaultPath    string
+	_defautPathOnce sync.Once
+)
+
 func defaultPath() string {
-	home, _ := os.UserHomeDir()
-	return path.Join(home, ".apollo-synchronizer")
+	_defautPathOnce.Do(func() {
+		home, _ := os.UserHomeDir()
+		_defaultPath = path.Join(home, ".apollo-synchronizer")
+	})
+
+	return _defaultPath
 }
