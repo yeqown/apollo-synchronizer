@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/menu"
 	"github.com/wailsapp/wails/v2/pkg/menu/keys"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -11,7 +12,8 @@ import (
 
 // App struct
 type App struct {
-	ctx context.Context
+	ctx    context.Context
+	logger logger.Logger
 }
 
 // NewApp creates a new App application struct
@@ -23,10 +25,11 @@ func NewApp() *App {
 func (b *App) startup(ctx context.Context) {
 	// Perform your setup here
 	b.ctx = ctx
+	b.logger = logger.NewDefaultLogger()
 
 	// register a menu item
-	menu := menu.NewMenuFromItems(
-		menu.SubMenu("App", menu.NewMenuFromItems(
+	mymenu := menu.NewMenuFromItems(
+		menu.SubMenu("", menu.NewMenuFromItems(
 			menu.Text("About", nil, b.about),
 			menu.Separator(),
 			menu.Text("Quit", keys.CmdOrCtrl("q"), func(_ *menu.CallbackData) {
@@ -39,7 +42,7 @@ func (b *App) startup(ctx context.Context) {
 			menu.Text("Preferences", keys.CmdOrCtrl("p"), b.openPreferences),
 		)),
 	)
-	runtime.MenuSetApplicationMenu(ctx, menu)
+	runtime.MenuSetApplicationMenu(ctx, mymenu)
 }
 
 // domReady is called after the front-end dom has been loaded

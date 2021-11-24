@@ -5,12 +5,39 @@ const go = {
   "main": {
     "App": {
       /**
+       * Debugf
+       * @param {string} arg1 - Go Type: string
+       * @param {Array.<number>} arg2 - Go Type: []interface {}
+       * @returns {Promise<void>} 
+       */
+      "Debugf": (arg1, arg2) => {
+        return window.go.main.App.Debugf(arg1, arg2);
+      },
+      /**
+       * Errorf
+       * @param {string} arg1 - Go Type: string
+       * @param {Array.<number>} arg2 - Go Type: []interface {}
+       * @returns {Promise<void>} 
+       */
+      "Errorf": (arg1, arg2) => {
+        return window.go.main.App.Errorf(arg1, arg2);
+      },
+      /**
        * Greet
        * @param {string} arg1 - Go Type: string
        * @returns {Promise<string>}  - Go Type: string
        */
       "Greet": (arg1) => {
         return window.go.main.App.Greet(arg1);
+      },
+      /**
+       * Infof
+       * @param {string} arg1 - Go Type: string
+       * @param {Array.<number>} arg2 - Go Type: []interface {}
+       * @returns {Promise<void>} 
+       */
+      "Infof": (arg1, arg2) => {
+        return window.go.main.App.Infof(arg1, arg2);
       },
     },
   },
