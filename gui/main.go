@@ -12,7 +12,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 )
 
-//go:embed frontend/src
+//go:embed frontend/dist
 var assets embed.FS
 
 //go:embed build/appicon.png
@@ -24,7 +24,7 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:             "gui",
+		Title:             "ApolloSynchronizer",
 		Width:             720,
 		Height:            570,
 		MinWidth:          720,
@@ -56,9 +56,10 @@ func main() {
 			WebviewIsTransparent: true,
 			WindowIsTranslucent:  true,
 			About: &mac.AboutInfo{
-				Title:   "Vanilla Template",
-				Message: "Part of the Wails projects",
-				Icon:    icon,
+				Title: "Apollo Synchronizer",
+				Message: "Help developer to sync between local file and remote apollo " +
+					"portal web since portal web is so messy to use.",
+				Icon: icon,
 			},
 		},
 	})
