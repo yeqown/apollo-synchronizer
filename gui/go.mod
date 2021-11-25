@@ -2,14 +2,19 @@ module github.com/yeqown/apollo-synchronizer/gui
 
 go 1.17
 
-require github.com/wailsapp/wails/v2 v2.0.0-beta.21
+require (
+	github.com/wailsapp/wails/v2 v2.0.0-beta.21
+	github.com/yeqown/apollo-synchronizer v1.2.1
+)
 
 require (
 	github.com/andybalholm/brotli v1.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fasthttp/websocket v0.0.0-20200320073529-1554a54587ab // indirect
 	github.com/gabriel-vasile/mimetype v1.3.1 // indirect
+	github.com/gizak/termui/v3 v3.1.0 // indirect
 	github.com/go-ole/go-ole v1.2.5 // indirect
+	github.com/go-resty/resty/v2 v2.6.0 // indirect
 	github.com/gofiber/fiber/v2 v2.17.0 // indirect
 	github.com/gofiber/websocket/v2 v2.0.8 // indirect
 	github.com/google/uuid v1.1.2 // indirect
@@ -26,6 +31,9 @@ require (
 	github.com/leaanthony/typescriptify-golang-structs v0.1.7 // indirect
 	github.com/leaanthony/webview2runtime v1.1.0 // indirect
 	github.com/leaanthony/winc v0.0.0-20210921073452-54963136bf18 // indirect
+	github.com/mattn/go-runewidth v0.0.9 // indirect
+	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7 // indirect
+	github.com/nsf/termbox-go v1.1.1 // indirect
 	github.com/pkg/browser v0.0.0-20210706143420-7d21f8c997e2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/savsgio/gotils v0.0.0-20200117113501-90175b0fbe3f // indirect
@@ -33,6 +41,8 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.28.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
+	github.com/yeqown/log v1.1.1 // indirect
 	golang.org/x/net v0.0.0-20210510120150-4163338589ed // indirect
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20211020174200-9d6173849985 // indirect
 )

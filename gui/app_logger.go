@@ -10,14 +10,14 @@ func makeup(format string, args ...interface{}) string {
 	return fmt.Sprintf(format, args...)
 }
 
-func (b *App) Infof(format string, args ...interface{}) {
+func (b *App) infof(format string, args ...interface{}) {
 	b.logger.Info(makeup(format, args...))
 }
 
-func (b *App) Errorf(format string, args ...interface{}) {
+func (b *App) errorf(format string, args ...interface{}) {
 	b.logger.Info(makeup(format, args...))
 }
 
-func (b *App) Debugf(format string, args ...interface{}) {
+func (b *App) debugf(format string, args ...interface{}) {
 	b.logger.Info(makeup(format, args...))
 }

@@ -15,7 +15,7 @@ func (b *App) about(_ *menu.CallbackData) {
 	}
 
 	if _, err := runtime.MessageDialog(b.ctx, option); err != nil {
-		b.Errorf("about failed: %v", err)
+		b.errorf("about failed: %v", err)
 	}
 }
 
