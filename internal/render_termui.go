@@ -7,7 +7,6 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"os"
-	"strconv"
 
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
@@ -169,15 +168,7 @@ func (t termuiRenderer) renderingResult(results []*synchronizeResult) {
 	}
 
 	for idx, r := range results {
-		row := []string{
-			string(r.mode),
-			r.key,
-			strconv.FormatBool(r.succeeded),
-			strconv.FormatBool(r.published),
-			r.error,
-		}
-		tb.Rows = append(tb.Rows, row)
-
+		tb.Rows = append(tb.Rows, t.renderResultSingle(r))
 		tb.RowStyles[idx+1] = ui.NewStyle(ui.ColorGreen)
 		if !r.succeeded {
 			tb.RowStyles[idx+1] = ui.NewStyle(ui.ColorRed, ui.ColorBlack, ui.ModifierBold)
@@ -187,4 +178,21 @@ func (t termuiRenderer) renderingResult(results []*synchronizeResult) {
 
 	ui.Render(tb)
 	_ = t.wait()
+}
+
+func (t termuiRenderer) renderResultSingle(r *synchronizeResult) []string {
+	formatBool := func(b bool) string {
+		if b {
+			return "O"
+		}
+		return "F"
+	}
+
+	return []string{
+		string(r.mode),
+		r.key,
+		formatBool(r.succeeded),
+		formatBool(r.published),
+		r.error,
+	}
 }
