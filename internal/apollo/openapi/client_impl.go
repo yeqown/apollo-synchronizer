@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	_ Client = new(openapiClient)
+	_ Client = (*openapiClient)(nil)
 )
 
 type openapiClient struct {
