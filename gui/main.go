@@ -25,13 +25,13 @@ func main() {
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:             "ApolloSynchronizer",
-		Width:             720,
-		Height:            570,
-		MinWidth:          720,
-		MinHeight:         570,
+		Width:             800,
+		Height:            600,
+		MinWidth:          800,
+		MinHeight:         600,
 		MaxWidth:          1280,
 		MaxHeight:         740,
-		DisableResize:     false,
+		DisableResize:     true,
 		Fullscreen:        false,
 		Frameless:         false,
 		StartHidden:       false,
