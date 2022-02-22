@@ -22,10 +22,13 @@ type App struct {
 }
 
 type clusterSetting struct {
-	Alias         string `json:"alias"`
-	Token         string `json:"token"`
-	PortalAddress string `json:"portal_address"`
-	Account       string `json:"account"`
+	Title         string   `json:"title"`
+	Secret        string   `json:"secret"`
+	Clusters      []string `json:"clusters"`
+	Env           string   `json:"env"`
+	PortalAddress string   `json:"portalAddr"`
+	Account       string   `json:"account"`
+	LocalDir      string   `json:"fs"`
 }
 
 type appState struct {

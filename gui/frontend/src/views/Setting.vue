@@ -11,6 +11,7 @@
     >
       <template #extra>
         <a-button key="add"> Add </a-button>
+        <a-button key="add" :disabled="!modified"> Save </a-button>
       </template>
     </a-page-header>
 
@@ -33,22 +34,30 @@
       <!-- list -->
       <a-list item-layout="vertical" size="small" :data-source="settings">
         <template #renderItem="{ item }">
-          <a-list-item key="item.title">
-            <template #extra>
-              <img
-                width="272"
-                alt="logo"
-                src="https://gw.alipayobjects.com/zos/rmsportal/mqaQswcyDLcXyDKnZfES.png"
-              />
-            </template>
-            <a-list-item-meta :description="item.description">
-              <template #title>
-                <a :href="item.href">{{ item.title }}</a>
-              </template>
-              <template #avatar><a-avatar :src="item.avatar" /></template>
-            </a-list-item-meta>
-            <!-- data -->
-            {{ item.content }}
+          <a-list-item :key="item.title">
+            <!-- config data -->
+            <a-descriptions
+              :title="item.title"
+              bordered
+              size="small"
+              :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }"
+            >
+              <a-descriptions-item label="Portal">{{
+                item.portalAddr
+              }}</a-descriptions-item>
+              <a-descriptions-item label="Clusters">{{
+                item.clusters.join(",")
+              }}</a-descriptions-item>
+              <a-descriptions-item label="Account">
+                {{ item.account }}
+              </a-descriptions-item>
+              <a-descriptions-item label="Secret">{{
+                item.secret
+              }}</a-descriptions-item>
+              <a-descriptions-item label="Local Directory">{{
+                item.fs
+              }}</a-descriptions-item>
+            </a-descriptions>
           </a-list-item>
         </template>
       </a-list>
@@ -57,14 +66,16 @@
 </template>
 
 <script>
+import { loadSetting, saveSetting } from "../interact/index";
 import {
   PageHeader,
   Button,
   List,
   ListItem,
-  ListItemMeta,
   Empty,
-  Avatar,
+  // Avatar,
+  Descriptions,
+  DescriptionsItem,
 } from "ant-design-vue";
 export default {
   name: "Setting",
@@ -73,31 +84,54 @@ export default {
     AButton: Button,
     AList: List,
     AListItem: ListItem,
-    AListItemMeta: ListItemMeta,
     AEmpty: Empty,
-    AAvatar: Avatar,
+    // AAvatar: Avatar,
+    ADescriptions: Descriptions,
+    ADescriptionsItem: DescriptionsItem,
   },
   data() {
     return {
+      modified: false,
       settings: [
         {
           title: "setting1",
-          description: "description1",
-          cluster: "dev",
-          avatar:
-            "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png",
-          data: {},
+          account: "apollo",
+          clusters: ["default", "swimming1"],
+          env: "DEV",
+          portalAddr: "http://localhost:8080",
+          secret: "ebba7e6efa4bb04479eb38464c0e7afc65",
+          fs: "/Users/jia/.asy/setting1-DEV-$portalHash6",
         },
         {
           title: "setting2",
-          description: "description2",
-          cluster: "prod",
-          avatar:
-            "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png",
-          data: {},
+          account: "apollo",
+          clusters: ["default", "preprod"],
+          env: "DEV",
+          portalAddr: "http://localhost:8080",
+          secret: "ebba7e6efa4bb04479eb38464c0e7afc65",
+          fs: "/Users/jia/.asy/setting2-DEV-$portalHash6",
         },
       ],
     };
+  },
+  mounted() {
+    console.log("mounted");
+    loadSetting().then((settings) => {
+      console.log("loadSetting result", settings);
+      this.settings = settings;
+    });
+  },
+  methods: {
+    enableModified() {
+      this.modified = true;
+    },
+    save() {
+      saveSetting(this.settings).then((result) => {
+        console.log(this.settings);
+        console.log("SaveSettings called: ", result);
+      });
+      this.modified = false;
+    },
   },
 };
 </script>

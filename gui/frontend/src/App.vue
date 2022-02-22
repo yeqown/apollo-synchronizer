@@ -1,30 +1,36 @@
 <template>
   <a-layout style="height: 100%">
     <a-affix :offset-top="top">
+      <div id="fix-window-placeholder" data-wails-drag></div>
       <a-layout-header
-        style="padding: 0; width: 100%; background: #ffffff; float: left"
+        style="
+          padding: 0;
+          width: 100%;
+          height: 48px;
+          background: #ffffff;
+          float: left;
+        "
       >
         <div class="logo-container">
-          <div id="fix-window-placeholder"></div>
           <div id="logo" />
         </div>
         <a-menu
           mode="horizontal"
           theme="light"
           :default-selected-keys="['dashboard']"
-          :style="{ lineHeight: '64px' }"
+          :style="{ lineHeight: '48px' }"
           @select="handleMenuSelect"
         >
-          <a-menu-item key="dashboard">
+          <a-menu-item key="dashboard" style="line-height: 48px">
             <template #icon> <DashboardTwoTone /> </template
-            >Dashboard</a-menu-item
+            >Welcome</a-menu-item
           >
-          <a-menu-item key="synchronize"
+          <a-menu-item key="synchronize" style="line-height: 48px"
             ><template #icon>
               <SyncOutlined two-tone-color="#1890ff" /> </template
             >Synchronize</a-menu-item
           >
-          <a-menu-item key="setting"
+          <a-menu-item key="setting" style="line-height: 48px"
             ><template #icon> <SettingTwoTone /> </template>Setting</a-menu-item
           >
         </a-menu>
@@ -109,29 +115,24 @@ export default {
   width: 100%;
 }
 
-/* #components-layout-demo-top-side {
-  width: 100%;
-  height: 64px;
-  padding: 0px;
-  background: #ffffff;
-} */
-
 .logo-container {
   float: left;
   width: 120px;
-  height: 64px;
+  height: 48px;
   display: flex;
   flex-direction: column;
 }
 
-.logo-container > #fix-window-placeholder {
-  height: 24px;
+#fix-window-placeholder {
+  height: 36px;
+  width: 100%;
+  background: #f1f0f0;
 }
 
 .logo-container > #logo {
   width: 100%;
-  height: 40px;
-  line-height: 40px;
+  height: 48px;
+  line-height: 48px;
   background: #e6f7ff;
 }
 </style>

@@ -3,8 +3,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 const routes = [
     {
         path: '/',
-        name: 'dashboard',
-        component: () => import('./views/Dashboard.vue')
+        redirect: '/dashboard'
     },
     {
         path: '/dashboard',

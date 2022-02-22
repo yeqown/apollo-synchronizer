@@ -22,7 +22,7 @@ func (b *App) getSynchronizer(clusterIdx uint8) internal.Synchronizer {
 	}
 
 	setting := b.Clusters[clusterIdx]
-	s := internal.NewSynchronizer(setting.Token, setting.PortalAddress, setting.Account)
+	s := internal.NewSynchronizer(setting.Secret, setting.PortalAddress, setting.Account)
 	synchronizerCache[clusterIdx] = s
 
 	return s
@@ -57,5 +57,19 @@ func (b *App) Synchronize() {
 
 	if err := s.Synchronize(ctx, &scope); err != nil {
 		b.errorf("synchronize failed: %v", err)
+	}
+}
+
+func (b *App) LoadSetting() []clusterSetting {
+	return []clusterSetting{
+		{
+			Title:         "setting1",
+			Secret:        "ebba7e6efa4bb04479eb38464c0e7afc65",
+			Clusters:      []string{"default", "preprod"},
+			Env:           "DEV",
+			PortalAddress: "http://localhost:8080",
+			Account:       "apollo",
+			LocalDir:      "/Users/jia/.asy/setting1-DEV-$portalHash6",
+		},
 	}
 }
