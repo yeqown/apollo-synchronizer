@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div style="height: 100%">
     <a-page-header
       style="
         border: 1px solid rgb(235, 237, 240);
@@ -16,7 +16,16 @@
     </a-page-header>
 
     <!-- setting render -->
-    <div style="height: 100%; text-align: left; background: #ffffff">
+    <div
+      style="
+        height: 400px;
+        text-align: left;
+        background: #ffffff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      "
+    >
       <!-- empty -->
       <a-empty
         v-if="!settings || settings.length === 0"
@@ -32,7 +41,12 @@
       </a-empty>
 
       <!-- list -->
-      <a-list item-layout="vertical" size="small" :data-source="settings">
+      <a-list
+        v-else
+        item-layout="vertical"
+        size="small"
+        :data-source="settings"
+      >
         <template #renderItem="{ item }">
           <a-list-item :key="item.title">
             <!-- config data -->
@@ -67,6 +81,7 @@
 
 <script>
 import { loadSetting, saveSetting } from "../interact/index";
+import { notificationError, notificationSuccess } from "../utils/notification";
 import {
   PageHeader,
   Button,
@@ -115,21 +130,32 @@ export default {
     };
   },
   mounted() {
-    console.log("mounted");
-    loadSetting().then((settings) => {
-      console.log("loadSetting result", settings);
-      this.settings = settings;
-    });
+    // console.log("mounted");
+    loadSetting().then(
+      (settings) => {
+        console.log("loadSetting", settings);
+        this.settings = settings;
+      },
+      (error) => {
+        notificationError(error);
+      }
+    );
   },
   methods: {
     enableModified() {
       this.modified = true;
     },
     save() {
-      saveSetting(this.settings).then((result) => {
-        console.log(this.settings);
-        console.log("SaveSettings called: ", result);
-      });
+      saveSetting(this.settings).then(
+        (result) => {
+          // console.log(this.settings);
+          console.log("SaveSettings called: ", result);
+          notificationSuccess("All settings have been saved.");
+        },
+        (error) => {
+          notificationError(error);
+        }
+      );
       this.modified = false;
     },
   },

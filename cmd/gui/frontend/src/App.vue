@@ -1,41 +1,37 @@
 <template>
   <a-layout style="height: 100%">
-    <a-affix :offset-top="top">
-      <div id="fix-window-placeholder" data-wails-drag></div>
-      <a-layout-header
-        style="
-          padding: 0;
-          width: 100%;
-          height: 48px;
-          background: #ffffff;
-          float: left;
-        "
+    <div id="fix-window-placeholder" data-wails-drag></div>
+    <a-layout-header
+      style="
+        padding: 0;
+        width: 100%;
+        height: 48px;
+        background: #ffffff;
+        float: left;
+      "
+    >
+      <div class="logo-container">
+        <div id="logo" />
+      </div>
+      <a-menu
+        mode="horizontal"
+        theme="light"
+        :default-selected-keys="['dashboard']"
+        :style="{ lineHeight: '48px' }"
+        @select="handleMenuSelect"
       >
-        <div class="logo-container">
-          <div id="logo" />
-        </div>
-        <a-menu
-          mode="horizontal"
-          theme="light"
-          :default-selected-keys="['dashboard']"
-          :style="{ lineHeight: '48px' }"
-          @select="handleMenuSelect"
+        <a-menu-item key="dashboard" style="line-height: 48px">
+          <template #icon> <DashboardTwoTone /> </template>Welcome</a-menu-item
         >
-          <a-menu-item key="dashboard" style="line-height: 48px">
-            <template #icon> <DashboardTwoTone /> </template
-            >Welcome</a-menu-item
-          >
-          <a-menu-item key="synchronize" style="line-height: 48px"
-            ><template #icon>
-              <SyncOutlined two-tone-color="#1890ff" /> </template
-            >Synchronize</a-menu-item
-          >
-          <a-menu-item key="setting" style="line-height: 48px"
-            ><template #icon> <SettingTwoTone /> </template>Setting</a-menu-item
-          >
-        </a-menu>
-      </a-layout-header>
-    </a-affix>
+        <a-menu-item key="synchronize" style="line-height: 48px"
+          ><template #icon> <SyncOutlined two-tone-color="#1890ff" /> </template
+          >Synchronize</a-menu-item
+        >
+        <a-menu-item key="setting" style="line-height: 48px"
+          ><template #icon> <SettingTwoTone /> </template>Setting</a-menu-item
+        >
+      </a-menu>
+    </a-layout-header>
     <a-layout>
       <a-layout-content style="padding: 1em">
         <router-view></router-view>
@@ -53,7 +49,7 @@ import {
   LayoutContent,
   Menu,
   MenuItem,
-  Affix,
+  // Affix,
 } from "ant-design-vue";
 import {
   SettingTwoTone,
@@ -70,7 +66,7 @@ export default {
     // ALayoutFooter: LayoutFooter,
     AMenu: Menu,
     AMenuItem: MenuItem,
-    AAffix: Affix,
+    // AAffix: Affix,
     // icons
     SettingTwoTone,
     SyncOutlined,
