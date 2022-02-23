@@ -5,6 +5,14 @@
     * formatTs(1547782400) // "2019-01-01 00:00:00"
     */
 const formatTs = (ts) => {
+    if (typeof ts !== 'number' || isNaN(ts)) {
+        return "NaN";
+    }
+
+    if (ts === 0) {
+        return "Never";
+    }
+
     const date = new Date(ts);
 
     // parse ts in format "2019-01-01T00:00:00.000Z"

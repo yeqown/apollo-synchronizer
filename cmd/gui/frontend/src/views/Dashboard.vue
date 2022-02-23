@@ -37,7 +37,7 @@
           />
           <a-statistic
             title="Open Count"
-            :value="statistics.openCount"
+            :value="_formatNumber(statistics.openCount)"
             class="statistics-item"
           />
           <a-statistic
@@ -51,21 +51,21 @@
         <div class="statistics-container">
           <a-statistic
             title="Upload Total"
-            :value="statistics.uploadFailedCount"
+            :value="_formatNumber(statistics.uploadFailedCount)"
             class="statistics-item"
           >
             <template #suffix>
-              <span> {{ `/ ${statistics.uploadCount}` }} </span>
+              <span> {{ `/ ${_formatNumber(statistics.uploadCount)}` }} </span>
             </template>
           </a-statistic>
           <a-statistic
             title="Upload Files"
-            :value="statistics.uploadFileCount"
+            :value="_formatNumber(statistics.uploadFileCount)"
             class="statistics-item"
           />
           <a-statistic
-            title="Upload File Size"
-            :value="statistics.uploadFileSize"
+            title="Upload File Bytes"
+            :value="_formatNumber(statistics.uploadFileSize)"
             class="statistics-item"
           />
         </div>
@@ -74,21 +74,23 @@
         <div class="statistics-container">
           <a-statistic
             title="Download Total"
-            :value="statistics.downloadFailedCount"
+            :value="_formatNumber(statistics.downloadFailedCount)"
             class="statistics-item"
           >
             <template #suffix>
-              <span> {{ `/ ${statistics.downloadCount}` }} </span>
+              <span>
+                {{ `/ ${_formatNumber(statistics.downloadCount)}` }}
+              </span>
             </template>
           </a-statistic>
           <a-statistic
             title="Download Files"
-            :value="statistics.downloadFileCount"
+            :value="_formatNumber(statistics.downloadFileCount)"
             class="statistics-item"
           />
           <a-statistic
-            title="Download File Size"
-            :value="statistics.downloadFileSize"
+            title="Download File Bytes"
+            :value="_formatNumber(statistics.downloadFileSize)"
             class="statistics-item"
           />
         </div>
@@ -108,6 +110,7 @@
 
 <script>
 import { loadStatistics } from "../interact/index";
+import { formatNumber } from "../utils/index";
 import { formatTs, humanizeTime } from "../utils/time";
 import { Statistic, PageHeader } from "ant-design-vue";
 import { notificationError } from "../utils/notification";
@@ -144,6 +147,9 @@ export default {
     },
     _formatTs(ts) {
       return formatTs(ts);
+    },
+    _formatNumber(num) {
+      return formatNumber(num);
     },
   },
   mounted() {

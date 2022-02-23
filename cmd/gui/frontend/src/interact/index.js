@@ -11,9 +11,9 @@ const loadStatistics = () => {
         openCount: 0,
         openTime: 0,
 
-        uploadCount: 0,
+        uploadCount: 2,
         uploadFileCount: 0,
-        uploadFileSize: 0,
+        uploadFileSize: 1001,
         uploadFailedCount: 0,
 
         downloadCount: 0,
