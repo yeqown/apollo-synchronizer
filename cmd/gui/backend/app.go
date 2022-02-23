@@ -198,7 +198,7 @@ type statistics struct {
 	OpenCount   int64 `json:"openCount"`
 	OpenTime    int64 `json:"openTime"` // seconds
 
-	UploadCount       int64 `json:"uploadFileCount"`   // how many times the user used upload mode
+	UploadCount       int64 `json:"uploadCount"`       // how many times the user used upload mode
 	UploadFileCount   int64 `json:"uploadFileCount"`   // how many files uploaded
 	UploadFileSize    int64 `json:"uploadFileSize"`    // how many bytes uploaded
 	UploadFailedCount int64 `json:"uploadFailedCount"` // how many times the user failed to upload a file

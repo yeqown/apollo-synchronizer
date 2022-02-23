@@ -11,25 +11,95 @@
     ></a-page-header>
 
     <!-- dashboard content -->
-    <div style="text-align: left; background: #fff; padding: 16px 24px">
-      <!-- usage section -->
+    <div
+      style="
+        text-align: left;
+        background: #fff;
+        padding: 16px 24px;
+        height: 400px;
+      "
+    >
+      <!-- statistics section -->
       <div>
-        <h3>Usage</h3>
-        <a-statistic
-          title="Active Users"
-          :value="112893"
-          style="margin-right: 50px"
-        />
-        <a-statistic
-          title="Account Balance (CNY)"
-          :precision="2"
-          :value="112893"
-        />
+        <h3 style="color: #03a9f4; font-weight: bold; font-size: 1.4em">
+          #Statistic#
+        </h3>
+        <div class="statistics-container">
+          <a-statistic
+            title="Last Open"
+            :value="_formatTs(statistics.lastOpenTs)"
+            class="statistics-item"
+          />
+          <a-statistic
+            title="First Open"
+            :value="_formatTs(statistics.firstOpenTs)"
+            class="statistics-item"
+          />
+          <a-statistic
+            title="Open Count"
+            :value="statistics.openCount"
+            class="statistics-item"
+          />
+          <a-statistic
+            title="Open Time"
+            :value="_humanizeTime(statistics.openTime)"
+            class="statistics-item"
+          />
+        </div>
+
+        <!-- upload -->
+        <div class="statistics-container">
+          <a-statistic
+            title="Upload Total"
+            :value="statistics.uploadFailedCount"
+            class="statistics-item"
+          >
+            <template #suffix>
+              <span> {{ `/ ${statistics.uploadCount}` }} </span>
+            </template>
+          </a-statistic>
+          <a-statistic
+            title="Upload Files"
+            :value="statistics.uploadFileCount"
+            class="statistics-item"
+          />
+          <a-statistic
+            title="Upload File Size"
+            :value="statistics.uploadFileSize"
+            class="statistics-item"
+          />
+        </div>
+
+        <!-- download -->
+        <div class="statistics-container">
+          <a-statistic
+            title="Download Total"
+            :value="statistics.downloadFailedCount"
+            class="statistics-item"
+          >
+            <template #suffix>
+              <span> {{ `/ ${statistics.downloadCount}` }} </span>
+            </template>
+          </a-statistic>
+          <a-statistic
+            title="Download Files"
+            :value="statistics.downloadFileCount"
+            class="statistics-item"
+          />
+          <a-statistic
+            title="Download File Size"
+            :value="statistics.downloadFileSize"
+            class="statistics-item"
+          />
+        </div>
       </div>
+
       <!-- document section -->
-      <div>
-        <h3>Document</h3>
-        <p>https://github.com/yeqown/apollo-synchronizer</p>
+      <div style="margin-top: 1em">
+        <h3 style="color: #03a9f4; font-weight: bold; font-size: 1.4em">
+          #Document#
+        </h3>
+        <a>https://github.com/yeqown/apollo-synchronizer</a>
       </div>
     </div>
     <!-- dashboard content end here -->
@@ -37,12 +107,75 @@
 </template>
 
 <script>
+import { loadStatistics } from "../interact/index";
+import { formatTs, humanizeTime } from "../utils/time";
 import { Statistic, PageHeader } from "ant-design-vue";
+import { notificationError } from "../utils/notification";
+
 export default {
   name: "Dashboard",
   components: {
     APageHeader: PageHeader,
     AStatistic: Statistic,
   },
+  data() {
+    return {
+      statistics: {
+        lastOpenTs: 0,
+        firstOpenTs: 0,
+        openCount: 0,
+        openTime: 0,
+
+        uploadCount: 0,
+        uploadFileCount: 0,
+        uploadFileSize: 0,
+        uploadFailedCount: 0,
+
+        downloadCount: 0,
+        downloadFileCount: 0,
+        downloadFileSize: 0,
+        downloadFailedCount: 0,
+      },
+    };
+  },
+  methods: {
+    _humanizeTime(ts) {
+      return humanizeTime(ts);
+    },
+    _formatTs(ts) {
+      return formatTs(ts);
+    },
+  },
+  mounted() {
+    loadStatistics().then(
+      (statistic) => {
+        this.statistics = statistic;
+      },
+      (error) => {
+        notificationError(error);
+      }
+    );
+  },
 };
 </script>
+
+<style scoped>
+.statistics-container {
+  display: flex;
+  flex-direction: row;
+  align-content: flex-start;
+}
+.statistics-item {
+  width: 181px;
+  height: 64px;
+  overflow: hidden;
+}
+
+.upload-text {
+  color: #52c41a;
+}
+
+.download-text {
+  color: #00bcd4;
+}
+</style>
