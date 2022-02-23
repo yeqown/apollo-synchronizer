@@ -1,4 +1,4 @@
-package openapi_test
+package api_test
 
 import (
 	"context"
@@ -6,17 +6,17 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/yeqown/apollo-synchronizer/internal/apollo/openapi"
+	"github.com/yeqown/apollo-synchronizer/pkg/apollo/api"
 )
 
 type openapiClientTestSuite struct {
 	suite.Suite
 
-	apollo openapi.Client
+	apollo api.Client
 }
 
 func (o *openapiClientTestSuite) SetupSuite() {
-	o.apollo = openapi.New(&openapi.Config{
+	o.apollo = api.New(&api.Config{
 		Token:         "82a95a5722ae8649f64ca5859a13032acab4b2a3",
 		PortalAddress: "http://localhost:8070",
 		Account:       "apollo",
@@ -41,7 +41,7 @@ func (o openapiClientTestSuite) Test_ListNamespaces() {
 
 func (o openapiClientTestSuite) Test_CreateNamespace() {
 	namespace, err := o.apollo.CreateNamespace(context.Background(),
-		"Test_CreateNamespaces", "demo", openapi.Format_JSON, false, "this is comment")
+		"Test_CreateNamespaces", "demo", api.Format_JSON, false, "this is comment")
 	o.NoError(err)
 	o.NotEmpty(namespace)
 

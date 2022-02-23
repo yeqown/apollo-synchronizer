@@ -48,7 +48,7 @@ GLOBAL OPTIONS:
    --path value               specify the path to synchronize (default: /Users/med/.apollo-synchronizer)
    --apollo.portaladdr value  apollo portal address
    --apollo.appid value       the targeted remote app in apollo
-   --apollo.secret value      openapi app`s token
+   --apollo.secret value      api app`s token
    --apollo.account value     user id in apollo (default: apollo)
    --apollo.env value         the environment of target remote app (default: DEV)
    --apollo.cluster value     the cluster of target remote app (default: default)

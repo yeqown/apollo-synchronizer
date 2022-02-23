@@ -1,4 +1,4 @@
-package internal
+package main
 
 import (
 	"image"
@@ -10,54 +10,56 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
+
+	asy "github.com/yeqown/apollo-synchronizer"
 )
 
 var (
-	_diffs = []diff1{
+	_diffs = []asy.Diff1{
 		{
-			diff0: diff0{
-				key:  "app.json",
-				mode: diffMode_MODIFY,
+			Diff0: asy.Diff0{
+				Key:  "app.json",
+				Mode: asy.DiffMode_MODIFY,
 			},
-			absFilepath: "/var/apollo-synchronizer/app",
+			AbsFilepath: "/var/apollo-synchronizer/app",
 		},
 		{
-			diff0: diff0{
-				key:  "app2.json",
-				mode: diffMode_CREATE,
+			Diff0: asy.Diff0{
+				Key:  "app2.json",
+				Mode: asy.DiffMode_CREATE,
 			},
-			absFilepath: "/var/apollo-synchronizer/app",
+			AbsFilepath: "/var/apollo-synchronizer/app",
 		},
 		{
-			diff0: diff0{
-				key:  "app3.json",
-				mode: diffMode_DELETE,
+			Diff0: asy.Diff0{
+				Key:  "app3.json",
+				Mode: asy.DiffMode_DELETE,
 			},
-			absFilepath: "/var/apollo-synchronizer/app",
+			AbsFilepath: "/var/apollo-synchronizer/app",
 		},
 	}
 
-	_results = []*synchronizeResult{
+	_results = []*asy.SynchronizeResult{
 		{
-			key:       "app.json",
-			mode:      diffMode_MODIFY,
-			error:     "you failed",
-			succeeded: false,
-			published: false,
+			Key:       "app.json",
+			Mode:      asy.DiffMode_MODIFY,
+			Error:     "you failed",
+			Succeeded: false,
+			Published: false,
 		},
 		{
-			key:       "app2.json",
-			mode:      diffMode_CREATE,
-			error:     "",
-			succeeded: true,
-			published: false,
+			Key:       "app2.json",
+			Mode:      asy.DiffMode_CREATE,
+			Error:     "",
+			Succeeded: true,
+			Published: false,
 		},
 		{
-			key:       "app3.json",
-			mode:      diffMode_DELETE,
-			error:     "",
-			succeeded: true,
-			published: true,
+			Key:       "app3.json",
+			Mode:      asy.DiffMode_DELETE,
+			Error:     "",
+			Succeeded: true,
+			Published: true,
 		},
 	}
 )
@@ -65,13 +67,13 @@ var (
 func Test_renderer_terminal(t *testing.T) {
 	r := terminalRenderer{}
 
-	r.renderingDiffs(_diffs)
-	r.renderingResult(_results)
+	r.RenderingDiffs(_diffs)
+	r.RenderingResult(_results)
 }
 
 func Test_renderer_termui(t *testing.T) {
-	r := newTermUI(&SynchronizeScope{
-		Mode:              SynchronizeMode_DOWNLOAD,
+	r := newTermUI(&asy.SynchronizeScope{
+		Mode:              asy.SynchronizeMode_DOWNLOAD,
 		Path:              "",
 		LocalFiles:        nil,
 		ApolloSecret:      "",
@@ -85,12 +87,12 @@ func Test_renderer_termui(t *testing.T) {
 		Force:             false,
 	})
 
-	r.renderingDiffs(_diffs)
-	r.renderingResult(_results)
+	r.RenderingDiffs(_diffs)
+	r.RenderingResult(_results)
 }
 
 // draw arrow direction (left arrow, right arrow) image
-func directionImage(x1, y1, x2, y2 int, mode SynchronizeMode) image.Image {
+func directionImage(x1, y1, x2, y2 int, mode asy.SynchronizeMode) image.Image {
 	img := image.NewGray(image.Rect(x1, y1, x2, y2))
 	padding := 1
 	w, h := x2-x1-2*padding, y2-y1-2*padding
@@ -158,7 +160,7 @@ func drawPoly(pts []image.Point, brush func(x, y int)) {
 }
 
 func Test_directionImages_down(t *testing.T) {
-	img := directionImage(0, 0, 27, 11, SynchronizeMode_DOWNLOAD)
+	img := directionImage(0, 0, 27, 11, asy.SynchronizeMode_DOWNLOAD)
 	fd, err := os.OpenFile("./direction_down.jpg", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	require.NoError(t, err)
 	defer fd.Close()
@@ -167,7 +169,7 @@ func Test_directionImages_down(t *testing.T) {
 }
 
 func Test_directionImages_up(t *testing.T) {
-	img := directionImage(0, 0, 100, 100, SynchronizeMode_UPLOAD)
+	img := directionImage(0, 0, 100, 100, asy.SynchronizeMode_UPLOAD)
 	fd, err := os.OpenFile("./direction_up.jpg", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	require.NoError(t, err)
 	defer fd.Close()

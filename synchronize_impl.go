@@ -1,4 +1,4 @@
-package internal
+package asy
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"github.com/yeqown/log"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/yeqown/apollo-synchronizer/internal/apollo/openapi"
+	"github.com/yeqown/apollo-synchronizer/pkg/apollo/api"
 )
 
 var (
@@ -19,39 +19,36 @@ var (
 )
 
 type synchronizer struct {
-	apollo openapi.Client
-	render renderer
+	apollo api.Client
 
 	// scope injected from Synchronize.
 	scope *SynchronizeScope
 }
 
-func NewSynchronizer(token, portalAddress, account string) Synchronizer {
-	return &synchronizer{
-		apollo: openapi.New(&openapi.Config{
-			Token:         token,
-			PortalAddress: portalAddress,
-			Account:       account,
-		}),
-		scope:  nil,
-		render: terminalRenderer{},
+func NewSynchronizer(scope *SynchronizeScope) (Synchronizer, error) {
+	// permit scope
+	log.WithField("scope", scope).Debug("enter synchronizer.Synchronize")
+	if scope == nil {
+		return nil, errors.New("scope is nil")
 	}
+	if err := scope.Valid(); err != nil {
+		return nil, errors.Wrap(err, "invalid scope")
+	}
+
+	return &synchronizer{
+		apollo: api.New(&api.Config{
+			Token:         scope.ApolloSecret,
+			PortalAddress: scope.ApolloPortalAddr,
+			Account:       scope.ApolloAccount,
+		}),
+		scope: scope,
+	}, nil
 }
 
 // Synchronize scheduling components to display information and execute CURD action with resources.
 // NOTICE: properties will be ignored.
-func (s *synchronizer) Synchronize(ctx context.Context, scope *SynchronizeScope) error {
-	// permit scope
-	log.
-		WithFields(log.Fields{
-			"scope": scope,
-		}).
-		Debug("enter synchronizer.Synchronize")
-	s.scope = scope
-	if scope.EnableTermUI {
-		s.render = newTermUI(scope)
-	}
-
+func (s *synchronizer) Synchronize(ctx context.Context) error {
+	scope := s.scope
 	log.Info("prepare to fetching remote namespace resources. please wait")
 	// load app/env/cluster/remote info
 	namespaceInfos, err := s.apollo.ListNamespaces(ctx, scope.ApolloAppID, scope.ApolloEnv, scope.ApolloClusterName)
@@ -60,7 +57,7 @@ func (s *synchronizer) Synchronize(ctx context.Context, scope *SynchronizeScope)
 	}
 	namespaces := make([]string, 0, len(namespaceInfos))
 	for _, v := range namespaceInfos {
-		if openapi.NotAllowedFormat(v.Format) {
+		if api.NotAllowedFormat(v.Format) {
 			// filter properties
 			continue
 		}
@@ -71,7 +68,7 @@ func (s *synchronizer) Synchronize(ctx context.Context, scope *SynchronizeScope)
 	files := make([]string, 0, len(scope.LocalFiles))
 	for _, v := range scope.LocalFiles {
 		ext := strings.TrimPrefix(filepath.Ext(v), ".")
-		if openapi.NotAllowedFormat(openapi.Format(ext)) {
+		if api.NotAllowedFormat(api.Format(ext)) {
 			// filter unsupported filetypes by apollo
 			continue
 		}
@@ -81,11 +78,18 @@ func (s *synchronizer) Synchronize(ctx context.Context, scope *SynchronizeScope)
 
 	// compare and display the synchronization information.
 	// 1. direction
-	// 2. target resources mode(C/M/D)
+	// 2. target resources Mode(C/M/D)
 	// 3. local and target resources relationship.
 	diffs := s.compare(scope.Mode, scope.Path, scope.Force, scope.Overwrite, files, namespaces)
-	// let user decide what to do next, continue or cancel?
-	switch s.render.renderingDiffs(diffs) {
+	log.
+		WithFields(log.Fields{
+			"diffs":      diffs,
+			"files":      files,
+			"namespaces": namespaces,
+		}).
+		Info("compare result")
+	// let user Decide what to do next, continue or cancel?
+	switch s.renderingDiffs(diffs) {
 	case Decide_CONFIRMED:
 	case Decide_CANCELLED:
 		fallthrough
@@ -98,7 +102,7 @@ func (s *synchronizer) Synchronize(ctx context.Context, scope *SynchronizeScope)
 	log.Info("synchronizing ...")
 	syncResults := s.doSynchronize(scope, diffs)
 	log.Info("synchronization finished, please check the result")
-	s.render.renderingResult(syncResults)
+	s.renderingResult(syncResults)
 
 	return nil
 }
@@ -107,9 +111,9 @@ func (s *synchronizer) Synchronize(ctx context.Context, scope *SynchronizeScope)
 // `force` indicates to create or delete to keep items consistent.
 // `overwrite` indicates cover old version while exists
 func (s synchronizer) compare(
-	mode SynchronizeMode, parent string, force, overwrite bool, localFiles, remoteNamespaces []string) []diff1 {
+	mode SynchronizeMode, parent string, force, overwrite bool, localFiles, remoteNamespaces []string) []Diff1 {
 
-	diff0s := make([]diff0, 0, len(localFiles)+len(remoteNamespaces))
+	diff0s := make([]Diff0, 0, len(localFiles)+len(remoteNamespaces))
 	switch mode {
 	case SynchronizeMode_UPLOAD:
 		diff0s = compare(localFiles, remoteNamespaces)
@@ -117,51 +121,51 @@ func (s synchronizer) compare(
 		diff0s = compare(remoteNamespaces, localFiles)
 	}
 
-	overwriteFilter := func(d diff0) bool {
+	overwriteFilter := func(d Diff0) bool {
 		// if not overwrite, skip modify operations
 		if overwrite {
 			return false
 		}
-		return d.mode == diffMode_MODIFY
+		return d.Mode == DiffMode_MODIFY
 	}
 
-	forceFilter := func(d diff0) bool {
+	forceFilter := func(d Diff0) bool {
 		// if not force, skip create and delete operations
 		if force {
 			return false
 		}
-		return d.mode == diffMode_CREATE || d.mode == diffMode_DELETE
+		return d.Mode == DiffMode_CREATE || d.Mode == DiffMode_DELETE
 	}
 
-	diff1s := make([]diff1, 0, len(diff0s))
+	diff1s := make([]Diff1, 0, len(diff0s))
 	for _, d0 := range diff0s {
 		if overwriteFilter(d0) || forceFilter(d0) {
 			// skip d0
 			continue
 		}
 
-		diff1s = append(diff1s, diff1{
-			diff0:       d0,
-			absFilepath: filepath.Join(parent, d0.key),
+		diff1s = append(diff1s, Diff1{
+			Diff0:       d0,
+			AbsFilepath: filepath.Join(parent, d0.Key),
 		})
 	}
 
 	return diff1s
 }
 
-type synchronizeResult struct {
-	key       string
-	mode      diffMode
-	error     string // modified failed reason
-	succeeded bool   // modified succeeded
-	published bool   // changes published
+type SynchronizeResult struct {
+	Key       string
+	Mode      diffMode
+	Error     string // modified failed reason
+	Succeeded bool   // modified Succeeded
+	Published bool   // changes Published
 }
 
 // doSynchronize execute synchronization between local and remote.
-func (s synchronizer) doSynchronize(scope *SynchronizeScope, diffs []diff1) []*synchronizeResult {
+func (s synchronizer) doSynchronize(scope *SynchronizeScope, diffs []Diff1) []*SynchronizeResult {
 	log.
 		WithFields(log.Fields{
-			"mode":  scope.Mode,
+			"Mode":  scope.Mode,
 			"diffs": diffs,
 		}).
 		Debug("doSynchronize")
@@ -171,9 +175,9 @@ func (s synchronizer) doSynchronize(scope *SynchronizeScope, diffs []diff1) []*s
 	eg, ctx2 := errgroup.WithContext(ctx)
 
 	var (
-		resultCh = make(chan *synchronizeResult, len(diffs))
+		resultCh = make(chan *SynchronizeResult, len(diffs))
 		done     = make(chan struct{})
-		results  = make([]*synchronizeResult, 0, len(diffs))
+		results  = make([]*SynchronizeResult, 0, len(diffs))
 	)
 
 	go func() {
@@ -212,72 +216,72 @@ func (s synchronizer) doSynchronize(scope *SynchronizeScope, diffs []diff1) []*s
 	return results
 }
 
-func (s synchronizer) download(ctx context.Context, d diff1) (r *synchronizeResult) {
-	r = &synchronizeResult{
-		key:       d.key,
-		mode:      d.mode,
-		error:     "",
-		succeeded: false,
-		// download always published by default since it has no version control mechanism.
-		published: true,
+func (s synchronizer) download(ctx context.Context, d Diff1) (r *SynchronizeResult) {
+	r = &SynchronizeResult{
+		Key:       d.Key,
+		Mode:      d.Mode,
+		Error:     "",
+		Succeeded: false,
+		// download always Published by default since it has no version control mechanism.
+		Published: true,
 	}
 	var err error
 
-	switch d.mode {
-	case diffMode_DELETE:
-		err = os.Remove(d.absFilepath)
-	case diffMode_CREATE:
+	switch d.Mode {
+	case DiffMode_DELETE:
+		err = os.Remove(d.AbsFilepath)
+	case DiffMode_CREATE:
 		fallthrough
-	case diffMode_MODIFY:
+	case DiffMode_MODIFY:
 		item, err2 := s.apollo.GetNamespaceItem(
-			ctx, s.scope.ApolloAppID, s.scope.ApolloEnv, s.scope.ApolloClusterName, d.key, "content")
+			ctx, s.scope.ApolloAppID, s.scope.ApolloEnv, s.scope.ApolloClusterName, d.Key, "content")
 		if err2 != nil {
 			err = err2
 			goto Failed
 		}
-		err = os.WriteFile(d.absFilepath, []byte(item.Value), 0644)
+		err = os.WriteFile(d.AbsFilepath, []byte(item.Value), 0644)
 	}
 
 Failed:
 	if err != nil {
-		r.error = err.Error()
+		r.Error = err.Error()
 		return
 	} else {
-		r.succeeded = true
+		r.Succeeded = true
 	}
 
 	return
 }
 
-func (s synchronizer) upload(ctx context.Context, d diff1, autoPublish bool) (r *synchronizeResult) {
-	r = &synchronizeResult{
-		key:       d.key,
-		mode:      d.mode,
-		succeeded: false,
-		published: false,
-		error:     "",
+func (s synchronizer) upload(ctx context.Context, d Diff1, autoPublish bool) (r *SynchronizeResult) {
+	r = &SynchronizeResult{
+		Key:       d.Key,
+		Mode:      d.Mode,
+		Succeeded: false,
+		Published: false,
+		Error:     "",
 	}
 	var (
 		err error
-		ns  = d.key
+		ns  = d.Key
 	)
 
-	switch d.mode {
-	case diffMode_DELETE:
+	switch d.Mode {
+	case DiffMode_DELETE:
 		err = s.apollo.DeleteNamespaceItem(
 			ctx, s.scope.ApolloAppID, s.scope.ApolloEnv, s.scope.ApolloClusterName, ns, "content")
-	case diffMode_CREATE:
-		ext := filepath.Ext(d.key)                      // .ext .json .yaml
-		namespaceName := strings.TrimSuffix(d.key, ext) // pure filename without ext
+	case DiffMode_CREATE:
+		ext := filepath.Ext(d.Key)                      // .ext .json .yaml
+		namespaceName := strings.TrimSuffix(d.Key, ext) // pure filename without ext
 		format := strings.TrimPrefix(ext, ".")          // json, yaml
 
-		bytes, err2 := os.ReadFile(d.absFilepath)
+		bytes, err2 := os.ReadFile(d.AbsFilepath)
 		if err2 != nil {
 			err = err2
 			goto Failed
 		}
 		_, err = s.apollo.CreateNamespace(ctx,
-			namespaceName, s.scope.ApolloAppID, openapi.Format(format), false, "created by apollo-synchronizer")
+			namespaceName, s.scope.ApolloAppID, api.Format(format), false, "created by apollo-synchronizer")
 		if err != nil {
 			goto Failed
 		}
@@ -286,8 +290,8 @@ func (s synchronizer) upload(ctx context.Context, d diff1, autoPublish bool) (r 
 		if err != nil {
 			goto Failed
 		}
-	case diffMode_MODIFY:
-		bytes, err2 := os.ReadFile(d.absFilepath)
+	case DiffMode_MODIFY:
+		bytes, err2 := os.ReadFile(d.AbsFilepath)
 		if err2 != nil {
 			err = err2
 			goto Failed
@@ -303,7 +307,7 @@ func (s synchronizer) upload(ctx context.Context, d diff1, autoPublish bool) (r 
 	if autoPublish {
 		if _, err2 := s.apollo.PublishNamespace(
 			ctx, s.scope.ApolloAppID, s.scope.ApolloEnv, s.scope.ApolloClusterName, ns); err2 == nil {
-			r.published = true
+			r.Published = true
 		} else {
 			log.
 				WithFields(log.Fields{
@@ -316,11 +320,24 @@ func (s synchronizer) upload(ctx context.Context, d diff1, autoPublish bool) (r 
 
 Failed:
 	if err != nil {
-		r.error = err.Error()
+		r.Error = err.Error()
 		return
 	} else {
-		r.succeeded = true
+		r.Succeeded = true
 	}
 
+	return
+}
+
+func (s synchronizer) renderingDiffs(diffs []Diff1) Decide {
+	if s.scope.Render == nil {
+		return Decide_CONFIRMED
+	}
+
+	return s.scope.Render.RenderingDiffs(diffs)
+}
+
+func (s synchronizer) renderingResult(results []*SynchronizeResult) {
+	s.scope.Render.RenderingResult(results)
 	return
 }

@@ -1,4 +1,4 @@
-package internal
+package main
 
 import (
 	"errors"
@@ -12,13 +12,17 @@ import (
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
 	"github.com/yeqown/log"
+
+	asy "github.com/yeqown/apollo-synchronizer"
 )
 
+var _ asy.Renderer = (*termuiRenderer)(nil)
+
 type termuiRenderer struct {
-	scope *SynchronizeScope
+	scope *asy.SynchronizeScope
 }
 
-func newTermUI(scope *SynchronizeScope) termuiRenderer {
+func newTermUI(scope *asy.SynchronizeScope) termuiRenderer {
 	return termuiRenderer{
 		scope: scope,
 	}
@@ -31,10 +35,10 @@ func (t termuiRenderer) initUI() {
 }
 
 var (
-	errEnter = errors.New("enter key")
+	errEnter = errors.New("enter Key")
 )
 
-// wait any key break view loop
+// wait any Key break view loop
 func (t termuiRenderer) wait() (err error) {
 	defer ui.Close()
 
@@ -56,7 +60,7 @@ func (t termuiRenderer) wait() (err error) {
 	return nil
 }
 
-func (t termuiRenderer) renderingDiffs(diffs []diff1) decide {
+func (t termuiRenderer) RenderingDiffs(diffs []asy.Diff1) asy.Decide {
 	t.initUI()
 	x, y := ui.TerminalDimensions()
 
@@ -105,34 +109,34 @@ PortalAddress: %s
 	p2 := widgets.NewParagraph()
 	p2.Border = false
 	switch t.scope.Mode {
-	case SynchronizeMode_DOWNLOAD:
+	case asy.SynchronizeMode_DOWNLOAD:
 		p2.Text = `⬅️⬅️`
 
-	case SynchronizeMode_UPLOAD:
+	case asy.SynchronizeMode_UPLOAD:
 		p2.Text = "➡️➡️"
 	}
 
 	for idx, d := range diffs {
-		row1, row2 := d.key, d.key
+		row1, row2 := d.Key, d.Key
 		color1, color2 := "yellow", "yellow"
 
-		switch d.mode {
-		case diffMode_CREATE:
+		switch d.Mode {
+		case asy.DiffMode_CREATE:
 			row2 = "✖✖✖"
 			color1 = "green"
 			color2 = "green"
-		case diffMode_DELETE:
+		case asy.DiffMode_DELETE:
 			row1 = "✖✖✖"
 			color1 = "red"
 			color2 = "red"
-		case diffMode_MODIFY:
+		case asy.DiffMode_MODIFY:
 		}
 
-		row1 = fmt.Sprintf("[%d] [%s %s](fg:%s)", idx+1, d.mode, row1, color1)
-		row2 = fmt.Sprintf("[%d] [%s %s](fg:%s)", idx+1, d.mode, row2, color2)
+		row1 = fmt.Sprintf("[%d] [%s %s](fg:%s)", idx+1, d.Mode, row1, color1)
+		row2 = fmt.Sprintf("[%d] [%s %s](fg:%s)", idx+1, d.Mode, row2, color2)
 		l1.Rows = append(l1.Rows, row1)
 		l2.Rows = append(l2.Rows, row2)
-		l3.Rows = append(l3.Rows, d.absFilepath)
+		l3.Rows = append(l3.Rows, d.AbsFilepath)
 	}
 
 	p0.SetRect(0, 0, x/2+1, y/4+1)
@@ -145,14 +149,14 @@ PortalAddress: %s
 	ui.Render(p0, p1, l1, p2, l2, l3)
 	if err := t.wait(); err != nil {
 		if errors.Is(err, errEnter) {
-			return Decide_CONFIRMED
+			return asy.Decide_CONFIRMED
 		}
 	}
 
-	return Decide_CANCELLED
+	return asy.Decide_CANCELLED
 }
 
-func (t termuiRenderer) renderingResult(results []*synchronizeResult) {
+func (t termuiRenderer) RenderingResult(results []*asy.SynchronizeResult) {
 	t.initUI()
 	x, y := ui.TerminalDimensions()
 
@@ -170,16 +174,16 @@ func (t termuiRenderer) renderingResult(results []*synchronizeResult) {
 
 	for idx, r := range results {
 		row := []string{
-			string(r.mode),
-			r.key,
-			strconv.FormatBool(r.succeeded),
-			strconv.FormatBool(r.published),
-			r.error,
+			string(r.Mode),
+			r.Key,
+			strconv.FormatBool(r.Succeeded),
+			strconv.FormatBool(r.Published),
+			r.Error,
 		}
 		tb.Rows = append(tb.Rows, row)
 
 		tb.RowStyles[idx+1] = ui.NewStyle(ui.ColorGreen)
-		if !r.succeeded {
+		if !r.Succeeded {
 			tb.RowStyles[idx+1] = ui.NewStyle(ui.ColorRed, ui.ColorBlack, ui.ModifierBold)
 		}
 	}

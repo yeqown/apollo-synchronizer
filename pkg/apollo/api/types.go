@@ -1,4 +1,4 @@
-package openapi
+package api
 
 // AppInfo
 // generated from https://mholt.github.io/json-to-go/

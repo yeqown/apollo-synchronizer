@@ -1,6 +1,13 @@
 build:
 	go build -o asy ./cmd/asy
 
+install.cli:
+	@ echo "Installing asy cli from local"
+	go install ./cmd/asy
+
+install.gui:
+	@ echo "Installing GUI"
+	cd cmd/gui && wails build
 
 down:
 	./asy \

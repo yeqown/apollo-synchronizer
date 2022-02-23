@@ -7,10 +7,11 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
+
 	"github.com/urfave/cli/v2"
 	"github.com/yeqown/log"
 
-	"github.com/yeqown/apollo-synchronizer/internal"
+	asy "github.com/yeqown/apollo-synchronizer"
 )
 
 func main() {
@@ -46,14 +47,12 @@ func before(c *cli.Context) error {
 
 func action(c *cli.Context) error {
 	scope := fillSynchronizeScope(c)
-
-	if err := scope.Valid(); err != nil {
-		return errors.Wrap(err, "scope invalid")
+	s, err := asy.NewSynchronizer(scope)
+	if err != nil {
+		return errors.Wrap(err, "create synchronizer failed")
 	}
 
-	return internal.
-		NewSynchronizer(scope.ApolloSecret, scope.ApolloPortalAddr, scope.ApolloAccount).
-		Synchronize(context.Background(), scope)
+	return s.Synchronize(context.Background())
 }
 
 var flags = []cli.Flag{
@@ -105,7 +104,7 @@ var flags = []cli.Flag{
 	},
 	&cli.StringFlag{
 		Name:  "apollo.secret",
-		Usage: "openapi app's token",
+		Usage: "api app's token",
 	},
 	&cli.StringFlag{
 		Name:        "apollo.account",

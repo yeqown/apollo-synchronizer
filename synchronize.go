@@ -1,4 +1,4 @@
-package internal
+package asy
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 
 // Synchronizer 's duty is synchronizing between remote apollo portal and local filesystem.
 type Synchronizer interface {
-	Synchronize(ctx context.Context, syncCtx *SynchronizeScope) error
+	Synchronize(ctx context.Context) error
 }
 
 type SynchronizeMode uint8
@@ -22,7 +22,7 @@ const (
 type SynchronizeScope struct {
 	Mode SynchronizeMode
 	// Path is the parent directory which holds all downloaded remote.
-	// apollo.appid will be used as a sub-directory. [DOWNLOAD REQUIRED]
+	// apollo.appId will be used as a subdirectory. [DOWNLOAD REQUIRED]
 	Path string
 	// LocalFiles represents the absolute file path of local files. [UPLOAD ONLY]
 	LocalFiles []string
@@ -33,15 +33,18 @@ type SynchronizeScope struct {
 	ApolloClusterName string
 	ApolloPortalAddr  string
 	ApolloAccount     string
-	// ApolloAutoPublish indicates whether publish changes after uploaded to apollo namespaces.
-	// it's disabled by default.
+	// ApolloAutoPublish indicates whether publish changes after uploaded
+	// to apollo namespaces, it's disabled by default.
 	ApolloAutoPublish bool
 
 	// Overwrite indicates whether asy update the target while it exists.
 	Overwrite bool
 	// Force indicates whether to create the target while it not exists.
-	Force        bool
-	EnableTermUI bool
+	Force bool
+
+	// Render is an optional field which is used to render the process
+	// and result of synchronization.
+	Render Renderer
 }
 
 func (sc SynchronizeScope) Valid() error {

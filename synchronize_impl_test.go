@@ -1,4 +1,4 @@
-package internal
+package asy
 
 import (
 	"sort"
@@ -19,7 +19,7 @@ func Test_synchronizer_compare(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want []diff1
+		want []Diff1
 	}{
 		{
 			name: "case1",
@@ -37,27 +37,27 @@ func Test_synchronizer_compare(t *testing.T) {
 					"app3.json",
 				},
 			},
-			want: []diff1{
+			want: []Diff1{
 				{
-					diff0: diff0{
-						key:  "app1.json",
-						mode: diffMode_MODIFY,
+					Diff0: Diff0{
+						Key:  "app1.json",
+						Mode: DiffMode_MODIFY,
 					},
-					absFilepath: "/tmp/app1.json",
+					AbsFilepath: "/tmp/app1.json",
 				},
 				{
-					diff0: diff0{
-						key:  "app2.json",
-						mode: diffMode_CREATE,
+					Diff0: Diff0{
+						Key:  "app2.json",
+						Mode: DiffMode_CREATE,
 					},
-					absFilepath: "/tmp/app2.json",
+					AbsFilepath: "/tmp/app2.json",
 				},
 				{
-					diff0: diff0{
-						key:  "app3.json",
-						mode: diffMode_DELETE,
+					Diff0: Diff0{
+						Key:  "app3.json",
+						Mode: DiffMode_DELETE,
 					},
-					absFilepath: "/tmp/app3.json",
+					AbsFilepath: "/tmp/app3.json",
 				},
 			},
 		},
@@ -77,27 +77,27 @@ func Test_synchronizer_compare(t *testing.T) {
 					"app3.json",
 				},
 			},
-			want: []diff1{
+			want: []Diff1{
 				{
-					diff0: diff0{
-						key:  "app3.json",
-						mode: diffMode_CREATE,
+					Diff0: Diff0{
+						Key:  "app3.json",
+						Mode: DiffMode_CREATE,
 					},
-					absFilepath: "/tmp/app3.json",
+					AbsFilepath: "/tmp/app3.json",
 				},
 				{
-					diff0: diff0{
-						key:  "app1.json",
-						mode: diffMode_MODIFY,
+					Diff0: Diff0{
+						Key:  "app1.json",
+						Mode: DiffMode_MODIFY,
 					},
-					absFilepath: "/tmp/app1.json",
+					AbsFilepath: "/tmp/app1.json",
 				},
 				{
-					diff0: diff0{
-						key:  "app2.json",
-						mode: diffMode_DELETE,
+					Diff0: Diff0{
+						Key:  "app2.json",
+						Mode: DiffMode_DELETE,
 					},
-					absFilepath: "/tmp/app2.json",
+					AbsFilepath: "/tmp/app2.json",
 				},
 			},
 		},
@@ -117,13 +117,13 @@ func Test_synchronizer_compare(t *testing.T) {
 					"app3.json",
 				},
 			},
-			want: []diff1{
+			want: []Diff1{
 				{
-					diff0: diff0{
-						key:  "app1.json",
-						mode: diffMode_MODIFY,
+					Diff0: Diff0{
+						Key:  "app1.json",
+						Mode: DiffMode_MODIFY,
 					},
-					absFilepath: "/tmp/app1.json",
+					AbsFilepath: "/tmp/app1.json",
 				},
 			},
 		},
@@ -143,20 +143,20 @@ func Test_synchronizer_compare(t *testing.T) {
 					"app3.json",
 				},
 			},
-			want: []diff1{
+			want: []Diff1{
 				{
-					diff0: diff0{
-						key:  "app3.json",
-						mode: diffMode_CREATE,
+					Diff0: Diff0{
+						Key:  "app3.json",
+						Mode: DiffMode_CREATE,
 					},
-					absFilepath: "/tmp/app3.json",
+					AbsFilepath: "/tmp/app3.json",
 				},
 				{
-					diff0: diff0{
-						key:  "app2.json",
-						mode: diffMode_DELETE,
+					Diff0: Diff0{
+						Key:  "app2.json",
+						Mode: DiffMode_DELETE,
 					},
-					absFilepath: "/tmp/app2.json",
+					AbsFilepath: "/tmp/app2.json",
 				},
 			},
 		},
@@ -176,7 +176,7 @@ func Test_synchronizer_compare(t *testing.T) {
 					"app3.json",
 				},
 			},
-			want: []diff1{},
+			want: []Diff1{},
 		},
 	}
 

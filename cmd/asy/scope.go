@@ -7,17 +7,17 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/yeqown/apollo-synchronizer/internal"
-
 	"github.com/urfave/cli/v2"
 	"github.com/yeqown/log"
+
+	asy "github.com/yeqown/apollo-synchronizer"
 )
 
 // fillSynchronizeScope to fill scope in order:
 // 1. load config file (.asy) from current directory to fill apollo config.
 // 2. parse from command line parameters.
-func fillSynchronizeScope(ctx *cli.Context) (scope *internal.SynchronizeScope) {
-	scope = new(internal.SynchronizeScope)
+func fillSynchronizeScope(ctx *cli.Context) (scope *asy.SynchronizeScope) {
+	scope = new(asy.SynchronizeScope)
 	cwd, _ := os.Getwd()
 	tryFromFile(cwd, scope)
 	tryFromContext(ctx, scope)
@@ -26,7 +26,7 @@ func fillSynchronizeScope(ctx *cli.Context) (scope *internal.SynchronizeScope) {
 		scope.Path, _ = filepath.Abs(scope.Path)
 	}
 	scope.Path = path.Join(scope.Path, scope.ApolloAppID)
-	if scope.Mode == internal.SynchronizeMode_DOWNLOAD {
+	if scope.Mode == asy.SynchronizeMode_DOWNLOAD {
 		fi, err := os.Stat(scope.Path)
 		if err == nil && !fi.IsDir() {
 			log.Fatalf("%s is not a directory", scope.Path)
@@ -45,14 +45,14 @@ func fillSynchronizeScope(ctx *cli.Context) (scope *internal.SynchronizeScope) {
 	scope.LocalFiles = travelDirectory(scope.Path, false)
 
 	//switch scope.Mode {
-	//case internal.SynchronizeMode_UPLOAD:
+	//case pkg.SynchronizeMode_UPLOAD:
 	//	if scope.Path == "" {
 	//		scope.LocalFiles = ctx.StringSlice("file")
 	//	} else {
 	//		scope.Path = path.Join(scope.Path, scope.ApolloAppID)
 	//		scope.LocalFiles = travelDirectory(scope.Path, false)
 	//	}
-	//case internal.SynchronizeMode_DOWNLOAD:
+	//case pkg.SynchronizeMode_DOWNLOAD:
 	//	// use path only
 	//	scope.Path = path.Join(scope.Path, scope.ApolloAppID)
 	//	scope.LocalFiles = travelDirectory(scope.Path, false)
@@ -75,7 +75,7 @@ func fillSynchronizeScope(ctx *cli.Context) (scope *internal.SynchronizeScope) {
 	return
 }
 
-func tryFromFile(cwd string, scope *internal.SynchronizeScope) {
+func tryFromFile(cwd string, scope *asy.SynchronizeScope) {
 	fp := path.Join(cwd, ".asy.json")
 	_, err := os.Stat(fp)
 	if err != nil {
@@ -130,21 +130,20 @@ func tryFromFile(cwd string, scope *internal.SynchronizeScope) {
 	return
 }
 
-func tryFromContext(ctx *cli.Context, scope *internal.SynchronizeScope) {
+func tryFromContext(ctx *cli.Context, scope *asy.SynchronizeScope) {
 	// mode
-	scope.Mode = internal.SynchronizeMode_UNKNOWN
+	scope.Mode = asy.SynchronizeMode_UNKNOWN
 	if ctx.Bool("down") {
-		scope.Mode = internal.SynchronizeMode_DOWNLOAD
+		scope.Mode = asy.SynchronizeMode_DOWNLOAD
 	}
 	if ctx.Bool("up") {
-		scope.Mode = internal.SynchronizeMode_UPLOAD
+		scope.Mode = asy.SynchronizeMode_UPLOAD
 	}
 
 	scope.Force = ctx.Bool("force")
 	scope.Overwrite = ctx.Bool("overwrite")
-	scope.EnableTermUI = ctx.Bool("enable-termui")
 
-	// apollo openapi parameter
+	// apollo api parameter
 	scope.ApolloSecret = ctx.String("apollo.secret")
 	scope.ApolloAppID = ctx.String("apollo.appid")
 	scope.ApolloEnv = ctx.String("apollo.env")
@@ -152,6 +151,11 @@ func tryFromContext(ctx *cli.Context, scope *internal.SynchronizeScope) {
 	scope.ApolloPortalAddr = ctx.String("apollo.portaladdr")
 	scope.ApolloAccount = ctx.String("apollo.account")
 	scope.ApolloAutoPublish = ctx.Bool("auto-publish")
+
+	scope.Render = newTerminalUI()
+	if ctx.Bool("enable-termui") {
+		scope.Render = newTermUI(scope)
+	}
 
 	// local filesystem
 	scope.Path = ctx.String("path")

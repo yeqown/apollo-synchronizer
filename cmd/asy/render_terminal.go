@@ -1,59 +1,67 @@
-package internal
+package main
 
 import (
 	"fmt"
+
+	asy "github.com/yeqown/apollo-synchronizer"
 )
+
+var _ asy.Renderer = (*terminalRenderer)(nil)
 
 type terminalRenderer struct{}
 
-func (t terminalRenderer) renderingDiffs(diffs []diff1) decide {
+func newTerminalUI() asy.Renderer {
+	return &terminalRenderer{}
+}
+
+func (t terminalRenderer) RenderingDiffs(diffs []asy.Diff1) asy.Decide {
 	fmt.Printf("=================== synchronize differences ===================\n")
 
-	display := func(d diff1) {
+	display := func(d asy.Diff1) {
 		modeText := ""
-		switch d.mode {
-		case diffMode_DELETE:
-			modeText = red(string(d.mode))
-		case diffMode_MODIFY:
-			modeText = yellow(string(d.mode))
-		case diffMode_CREATE:
-			modeText = green(string(d.mode))
+		switch d.Mode {
+		case asy.DiffMode_DELETE:
+			modeText = red(string(d.Mode))
+		case asy.DiffMode_MODIFY:
+			modeText = yellow(string(d.Mode))
+		case asy.DiffMode_CREATE:
+			modeText = green(string(d.Mode))
 		}
 
-		fmt.Printf("%s %15s\t%s\n", modeText, d.key, d.absFilepath)
+		fmt.Printf("%s %15s\t%s\n", modeText, d.Key, d.AbsFilepath)
 	}
 
 	for _, d := range diffs {
 		display(d)
 	}
 
-	return Decide_CONFIRMED
+	return asy.Decide_CONFIRMED
 }
 
-func (t terminalRenderer) renderingResult(results []*synchronizeResult) {
+func (t terminalRenderer) RenderingResult(results []*asy.SynchronizeResult) {
 	fmt.Printf("=================== synchronization results ===================\n")
 
-	display := func(r synchronizeResult) {
+	display := func(r asy.SynchronizeResult) {
 		modeText := ""
-		switch r.mode {
-		case diffMode_DELETE:
-			modeText = red(string(r.mode))
-		case diffMode_MODIFY:
-			modeText = yellow(string(r.mode))
-		case diffMode_CREATE:
-			modeText = green(string(r.mode))
+		switch r.Mode {
+		case asy.DiffMode_DELETE:
+			modeText = red(string(r.Mode))
+		case asy.DiffMode_MODIFY:
+			modeText = yellow(string(r.Mode))
+		case asy.DiffMode_CREATE:
+			modeText = green(string(r.Mode))
 		}
 		uploadResultText := red("FAILED ")
 		publishResultText := gray("UNDONE")
-		ext := yellow("REASON: " + r.error)
-		if r.succeeded {
+		ext := yellow("REASON: " + r.Error)
+		if r.Succeeded {
 			uploadResultText = green("SUCCESS")
 			publishResultText = green("DONE   ")
 			ext = ""
 		}
 
 		fmt.Printf("%s %15s\tSyncStatus: %s\tPubStatus: %s\t%s\n",
-			modeText, r.key, uploadResultText, publishResultText, ext)
+			modeText, r.Key, uploadResultText, publishResultText, ext)
 	}
 
 	for _, r := range results {

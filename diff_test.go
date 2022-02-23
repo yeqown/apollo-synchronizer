@@ -1,4 +1,4 @@
-package internal
+package asy
 
 import (
 	"testing"
@@ -14,7 +14,7 @@ func Test_compare(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want []diff0
+		want []Diff0
 	}{
 		{
 			name: "case1",
@@ -27,14 +27,14 @@ func Test_compare(t *testing.T) {
 					"app1.json",
 				},
 			},
-			want: []diff0{
+			want: []Diff0{
 				{
-					key:  "app1.json",
-					mode: diffMode_MODIFY,
+					Key:  "app1.json",
+					Mode: DiffMode_MODIFY,
 				},
 				{
-					key:  "app2.json",
-					mode: diffMode_CREATE,
+					Key:  "app2.json",
+					Mode: DiffMode_CREATE,
 				},
 			},
 		},
@@ -49,14 +49,14 @@ func Test_compare(t *testing.T) {
 					"app2.json",
 				},
 			},
-			want: []diff0{
+			want: []Diff0{
 				{
-					key:  "app1.json",
-					mode: diffMode_MODIFY,
+					Key:  "app1.json",
+					Mode: DiffMode_MODIFY,
 				},
 				{
-					key:  "app2.json",
-					mode: diffMode_DELETE,
+					Key:  "app2.json",
+					Mode: DiffMode_DELETE,
 				},
 			},
 		},
