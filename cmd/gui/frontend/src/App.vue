@@ -1,6 +1,8 @@
 <template>
   <a-layout style="height: 100%">
-    <div id="fix-window-placeholder" data-wails-drag></div>
+    <div id="fix-window-placeholder" data-wails-drag>
+      <h4>Apollo Synchronizer</h4>
+    </div>
     <a-layout-header
       style="
         padding: 0;
@@ -122,7 +124,14 @@ export default {
 #fix-window-placeholder {
   height: 36px;
   width: 100%;
-  background: #f1f0f0;
+  background: #1890ff;
+}
+
+#fix-window-placeholder > h4 {
+  font-weight: bold;
+  line-height: 36px;
+  margin: 0px;
+  color: azure;
 }
 
 .logo-container > #logo {

@@ -1,8 +1,9 @@
 import { loadSetting, saveSetting } from './setting';
 
 const loadStatistics = () => {
-    if (window.go && window.go.backend && window.go.backend.App && window.go.backend.App.LoadStatistics) {
-        return window.go.backend.App.LoadStatistics();
+    if (window.go && window.go.backend && window.go.backend.App && window.go.backend.App.Statistics) {
+        console.log('loadStatistics called');
+        return window.go.backend.App.Statistics();
     }
 
     return Promise.resolve({
@@ -11,9 +12,9 @@ const loadStatistics = () => {
         openCount: 0,
         openTime: 0,
 
-        uploadCount: 2,
+        uploadCount: 0,
         uploadFileCount: 0,
-        uploadFileSize: 1001,
+        uploadFileSize: 0,
         uploadFailedCount: 0,
 
         downloadCount: 0,

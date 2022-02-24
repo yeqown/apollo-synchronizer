@@ -1,5 +1,5 @@
 /*
-    * @param {number} ts
+    * @param {number} ts (seconds)
     * @return {string}
     * @example
     * formatTs(1547782400) // "2019-01-01 00:00:00"
@@ -13,7 +13,7 @@ const formatTs = (ts) => {
         return "Never";
     }
 
-    const date = new Date(ts);
+    const date = new Date(ts * 1000);
 
     // parse ts in format "2019-01-01T00:00:00.000Z"
     return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;

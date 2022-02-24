@@ -19,6 +19,13 @@
         <a-cloud-download-outlined style="font-size: 8em; color: #00bcd4" />
       </div>
     </div>
+
+    <div style="margin-top: 1em">
+      <p>
+        Look over synchronize
+        <router-link to="/synchronize-history">History</router-link>
+      </p>
+    </div>
   </div>
 </template>
 
@@ -28,9 +35,11 @@ import {
   CloudDownloadOutlined,
   CloudUploadOutlined,
 } from "@ant-design/icons-vue";
+import { RouterLink } from "vue-router";
 export default {
   name: "Synchronize",
   components: {
+    RouterLink,
     APageHeader: PageHeader,
     // ACard: Card,
     ACloudDownloadOutlined: CloudDownloadOutlined,

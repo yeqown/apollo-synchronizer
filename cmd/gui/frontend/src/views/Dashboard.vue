@@ -155,6 +155,7 @@ export default {
   mounted() {
     loadStatistics().then(
       (statistic) => {
+        console.log("statistic", statistic);
         this.statistics = statistic;
       },
       (error) => {

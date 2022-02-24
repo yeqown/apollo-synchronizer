@@ -2,7 +2,6 @@ package backend
 
 import (
 	"context"
-	"path/filepath"
 	"time"
 
 	asy "github.com/yeqown/apollo-synchronizer"
@@ -72,9 +71,10 @@ func (b *App) LoadSetting() []apolloClusterSetting {
 
 func (b *App) SaveSetting(settings []apolloClusterSetting) {
 	b.config.Settings = settings
-	save(filepath.Join(appConfigRoot(), "asyrc"), b.config.Bytes(), false)
+	save(_configFp, b.config, _ext_json)
 }
 
 func (b *App) Statistics() statistics {
+	b.debugf("App.Statistics called, statistics: %+v\n", b.statistics)
 	return *b.statistics
 }

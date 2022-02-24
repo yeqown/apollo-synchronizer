@@ -2,9 +2,8 @@ package backend
 
 import (
 	"context"
-	binarypkg "encoding/binary"
 	"encoding/json"
-	"io"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -41,69 +40,27 @@ func appConfigRoot() string {
 	return asyRoot
 }
 
-func read(fp string, binary bool) (bytes []byte, err error) {
-	fd, err := os.Open(fp)
-	if err != nil {
-		return nil, err
-	}
-	defer fd.Close()
-
-	if binary {
-		binarypkg.Read(fd, binarypkg.LittleEndian, bytes)
-	} else {
-		bytes, err = io.ReadAll(fd)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes, nil
-}
-
-// save file overwrite.
-func save(fp string, content []byte, binary bool) error {
-	fd, err := os.OpenFile(fp, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
-	if err != nil {
-		return err
-	}
-	defer fd.Close()
-
-	if binary {
-		binarypkg.Write(fd, binarypkg.LittleEndian, content)
-	} else {
-		_, err = fd.Write(content)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
+var (
+	_configFp     string = filepath.Join(appConfigRoot(), "asyrc")
+	_statisticsFp string = filepath.Join(appConfigRoot(), "statistics.bat")
+)
 
 // load config and statistics for app.
 func (b *App) load() error {
-	configFp := filepath.Join(appConfigRoot(), "asyrc")
-	statisticsFp := filepath.Join(appConfigRoot(), "statistics.bat")
-
-	raw, err := read(configFp, false)
+	err := read(_configFp, b.config, _ext_json)
 	if err != nil {
+		b.errorf("Failed to load config: %v", err)
 		if !os.IsNotExist(err) {
 			return err
 		}
 		// config file not exist, create a new one.
-		save(configFp, []byte("{}"), false)
-		raw = []byte("{}")
+		save(_configFp, b.config, _ext_json)
 	}
-	_ = json.Unmarshal(raw, b.config)
 
-	raw2, err2 := read(statisticsFp, true)
+	err2 := read(_statisticsFp, b.statistics, _ext_binary)
 	if err2 != nil {
-		if !os.IsNotExist(err2) {
-		}
+		b.errorf("Failed to load statistics: %v", err2)
 	}
-	_ = json.Unmarshal(raw2, b.statistics)
 
 	b.debugf("load finished, config: %+v, statistics: %+v", b.config, b.statistics)
 
@@ -158,11 +115,11 @@ func (b *App) OnShutdown(ctx context.Context) {
 		b.statistics.OpenTime += (time.Now().Unix() - b.statistics.LastOpened)
 	}
 
-	err := save(filepath.Join(appConfigRoot(), "asyrc"), b.config.Bytes(), false)
+	err := save(_configFp, b.config, _ext_json)
 	if err != nil {
 		b.errorf("Failed to save config: %v", err)
 	}
-	err = save(filepath.Join(appConfigRoot(), "statistics.bat"), b.statistics.Bytes(), true)
+	err = save(_statisticsFp, b.statistics, _ext_binary)
 	if err != nil {
 		b.errorf("Failed to save statistics: %v", err)
 	}
@@ -174,7 +131,7 @@ type apolloClusterSetting struct {
 	Title         string   `json:"title"`
 	Secret        string   `json:"secret"`
 	Clusters      []string `json:"clusters"`
-	Env           string   `json:"env"`
+	Envs          []string `json:"envs"`
 	PortalAddress string   `json:"portalAddr"`
 	Account       string   `json:"account"`
 	LocalDir      string   `json:"fs"`
@@ -186,7 +143,11 @@ type config struct {
 }
 
 func (c config) Bytes() []byte {
-	bytes, _ := json.Marshal(c)
+	bytes, err := json.Marshal(c)
+	if err != nil {
+		fmt.Println("config marshal error:", err)
+	}
+
 	return bytes
 }
 
@@ -210,6 +171,10 @@ type statistics struct {
 }
 
 func (s *statistics) Bytes() []byte {
-	bytes, _ := json.Marshal(s)
+	bytes, err := json.Marshal(s)
+	if err != nil {
+		fmt.Println("statistics marshal error:", err)
+	}
+
 	return bytes
 }
