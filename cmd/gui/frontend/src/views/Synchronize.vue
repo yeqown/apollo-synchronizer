@@ -11,11 +11,29 @@
     ></a-page-header>
     <div class="card-container">
       <!-- upload -->
-      <div class="card">
+      <div
+        class="card"
+        @click="
+          () =>
+            this.$router.push({
+              name: 'synchronize-do',
+              params: { action: 'upload' },
+            })
+        "
+      >
         <a-cloud-upload-outlined style="font-size: 8em; color: #52c41a" />
       </div>
       <!-- download -->
-      <div class="card">
+      <div
+        class="card"
+        @click="
+          () =>
+            this.$router.push({
+              name: 'synchronize-do',
+              params: { action: 'download' },
+            })
+        "
+      >
         <a-cloud-download-outlined style="font-size: 8em; color: #00bcd4" />
       </div>
     </div>

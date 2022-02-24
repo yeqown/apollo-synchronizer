@@ -21,6 +21,16 @@ const routes = [
         component: () => import('./views/Synchronize.vue')
     },
     {
+        path: '/synchronize-do',
+        name: 'synchronize-do',
+        component: () => import('./views/SynchronizeDo.vue')
+    },
+    {
+        path: '/synchronize-history',
+        name: 'synchronize-history',
+        component: () => import('./views/SynchronizeHistory.vue')
+    },
+    {
         path: '/setting',
         name: 'setting',
         component: () => import('./views/Setting.vue')

@@ -29,25 +29,39 @@ import (
 // }
 
 type SynchronizeScope struct {
+	ApolloPortalAddr  string              `json:"portalAddr"`
+	ApolloAccount     string              `json:"account"`
+	Path              string              `json:"fs"`
+	Mode              asy.SynchronizeMode `json:"mode"`
+	ApolloSecret      string              `json:"secret"`
+	ApolloAppID       string              `json:"appId"`
+	ApolloEnv         string              `json:"env"`
+	ApolloClusterName string              `json:"cluster"`
+	ApolloAutoPublish bool                `json:"isAutoPublish"`
+	Overwrite         bool                `json:"isOverwrite"`
+	Force             bool                `json:"isForce"`
 }
 
 func (b *App) Synchronize(scope2 *SynchronizeScope) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
+	b.debugf("App.Synchronize called, scope: %+v\n", scope2)
+	return nil
+
 	scope := asy.SynchronizeScope{
-		ApolloPortalAddr:  "",
-		ApolloAccount:     "",
-		Path:              "",
-		LocalFiles:        nil,
-		Mode:              0,
-		ApolloSecret:      "",
-		ApolloAppID:       "",
-		ApolloEnv:         "",
-		ApolloClusterName: "",
-		ApolloAutoPublish: false,
-		Overwrite:         false,
-		Force:             false,
+		ApolloPortalAddr:  scope2.ApolloPortalAddr,
+		ApolloAccount:     scope2.ApolloAccount,
+		Path:              "",  // TODO(@yeqown)
+		LocalFiles:        nil, // TODO(@yeqown)
+		Mode:              scope2.Mode,
+		ApolloSecret:      scope2.ApolloSecret,
+		ApolloAppID:       scope2.ApolloAppID,
+		ApolloEnv:         scope2.ApolloEnv,
+		ApolloClusterName: scope2.ApolloClusterName,
+		ApolloAutoPublish: scope2.ApolloAutoPublish,
+		Overwrite:         scope2.Overwrite,
+		Force:             scope2.Force,
 		Render:            eventsRender{},
 	}
 
