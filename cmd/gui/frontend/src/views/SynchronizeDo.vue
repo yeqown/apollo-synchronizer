@@ -105,14 +105,45 @@
               >
                 <a-row>
                   <a-col :span="7"
-                    ><a-checkbox value="force">Force</a-checkbox></a-col
-                  >
-                  <a-col :span="9" value="autopublish"
-                    ><a-checkbox>AutoPublish</a-checkbox></a-col
-                  >
-                  <a-col :span="8" value="overwrite"
-                    ><a-checkbox>Overwrite</a-checkbox></a-col
-                  >
+                    ><a-checkbox value="force"
+                      >Force
+                      <a-popover>
+                        <template #content>
+                          <p>
+                            If not set, creation and deletion will be ignored!
+                          </p>
+                        </template>
+                        <a-question-circle-two-tone />
+                      </a-popover>
+                    </a-checkbox>
+                  </a-col>
+                  <a-col :span="8">
+                    <a-checkbox value="overwrite"
+                      >Overwrite
+                      <a-popover>
+                        <template #content>
+                          <p>If not set, modification will be ignored!</p>
+                        </template>
+                        <a-question-circle-two-tone />
+                      </a-popover>
+                    </a-checkbox>
+                  </a-col>
+                  <a-col :span="9">
+                    <a-checkbox
+                      value="autopublish"
+                      :disabled="action !== 'upload'"
+                      >AutoPublish
+                      <a-popover>
+                        <template #content>
+                          <p>
+                            If not set, changes those uploaded to apollo would
+                            not be published automatically!
+                          </p>
+                        </template>
+                        <a-question-circle-two-tone />
+                      </a-popover>
+                    </a-checkbox>
+                  </a-col>
                 </a-row>
               </a-checkbox-group>
             </a-form-item>
@@ -138,6 +169,126 @@
         </a-col>
       </a-row>
     </div>
+
+    <a-modal
+      v-model:visible="syncModalVisible"
+      width="100%"
+      :closable="false"
+      @onCancel="() => (syncModalVisible = false)"
+    >
+      <div id="synchronize-render" style="width: 100%">
+        <a-steps :current="syncStepsCurrent">
+          <a-step title="Prepare">
+            <template #icon>
+              <a-cloud-upload-outlined />
+            </template>
+          </a-step>
+          <a-step title="Fetch and Decide"
+            ><template #icon> <a-cloud-upload-outlined /> </template
+          ></a-step>
+          <a-step title="Synchronize"
+            ><template #icon> <a-cloud-upload-outlined /> </template
+          ></a-step>
+          <a-step title="Done"
+            ><template #icon> <a-cloud-upload-outlined /> </template
+          ></a-step>
+        </a-steps>
+
+        <div id="step-content">
+          <div>
+            <template v-if="syncStepsCurrent === 0">
+              <a-result title="Fetching namespaces from apollo, please wait!">
+                <template #icon>
+                  <a-sync-outlined spin />
+                </template>
+              </a-result>
+            </template>
+
+            <template v-if="syncStepsCurrent === 1">
+              <a-table
+                :columns="[
+                  { title: 'Namespace', dataIndex: 'key', key: 'key' },
+                  { title: 'Mode', dataIndex: 'mode', key: 'mode' },
+                  {
+                    title: 'File',
+                    dataIndex: 'absFilepath',
+                    key: 'absFilepath',
+                  },
+                ]"
+                :pagination="{ hideOnSinglePage: true }"
+                :data-source="syncRenderDiffs"
+                size="small"
+              >
+                <template #headerCell="{ column }">
+                  <template v-if="column.key === 'mode'">
+                    <span>
+                      <a-question-circle-two-tone />
+                      Operation
+                      <!-- <a-popover>
+                      <template #content>
+                        <p>
+                          C+ means creation, M~ means modification, D- means
+                          deletion
+                        </p>
+                      </template>
+                    </a-popover> -->
+                    </span>
+                  </template>
+                </template>
+
+                <template #bodyCell="{ column, record }">
+                  {{ column.key }} / {{ record }}
+                </template>
+              </a-table>
+
+              <a-button type="primary" @click="confirmSynchronize"
+                >Confirm</a-button
+              >
+            </template>
+
+            <template v-if="syncStepsCurrent === 2">
+              <a-table
+                :columns="[
+                  { title: 'Namespace', dataIndex: 'key', key: 'key' },
+                  { title: 'Operation', dataIndex: 'mode', key: 'mode' },
+                  { title: 'Result', dataIndex: 'error', key: 'result' },
+                  {
+                    title: 'Published',
+                    dataIndex: 'published',
+                    key: 'published',
+                  },
+                ]"
+                :pagination="{ hideOnSinglePage: true }"
+                :data-source="syncRenderResults"
+                size="small"
+              >
+                <template #bodyCell="{ column, record }">
+                  <template v-if="column.key === 'result'">
+                    <span v-if="record.succeeded"> success </span>
+                    <span v-else>Failed: {{ record.error || "--" }}</span>
+                  </template>
+                </template>
+              </a-table>
+              <a-button type="primary" @click="() => renderStepsCurrent++"
+                >Continue</a-button
+              >
+            </template>
+
+            <!-- setp 4 -->
+            <template v-if="syncStepsCurrent === 3">
+              <a-result status="success" title="Synchronize Successfully!">
+              </a-result>
+            </template>
+          </div>
+
+          <a-button
+            type="primary"
+            @click="() => (syncStepsCurrent = ++syncStepsCurrent % 4)"
+            >Debug Next</a-button
+          >
+        </div>
+      </div>
+    </a-modal>
   </div>
 </template>
 
@@ -154,10 +305,18 @@ import {
   CheckboxGroup,
   Checkbox,
   Input,
+  Popover,
+  Modal,
+  Steps,
+  Step,
+  Result,
+  Table,
 } from "ant-design-vue";
 import {
   CloudDownloadOutlined,
   CloudUploadOutlined,
+  QuestionCircleTwoTone,
+  SyncOutlined,
 } from "@ant-design/icons-vue";
 import { loadSetting } from "../interact/setting";
 import {
@@ -165,7 +324,16 @@ import {
   notificationWarning,
   notificationSuccess,
 } from "../utils/notification";
-import { modeMapping, containsKey, synchronize } from "../interact/synchronize";
+import {
+  modeMapping,
+  containsKey,
+  synchronize,
+  bindEventOnce,
+  EVENT_RENDER_DIFF,
+  EVENT_RENDER_RESULT,
+  inputDecide,
+  decideMapping,
+} from "../interact/synchronize";
 export default {
   name: "SynchronizeDo",
   components: {
@@ -180,9 +348,17 @@ export default {
     ACheckboxGroup: CheckboxGroup,
     ACheckbox: Checkbox,
     AInput: Input,
+    APopover: Popover,
+    AModal: Modal,
+    ASteps: Steps,
+    AStep: Step,
+    AResult: Result,
+    ATable: Table,
     // icons
     ACloudDownloadOutlined: CloudDownloadOutlined,
     ACloudUploadOutlined: CloudUploadOutlined,
+    AQuestionCircleTwoTone: QuestionCircleTwoTone,
+    ASyncOutlined: SyncOutlined,
   },
   data: () => ({
     settings: [],
@@ -192,8 +368,26 @@ export default {
       usingEnv: "",
       usingCluster: "",
       appId: "",
-      optional: [],
+      optional: ["force", "overwrite"],
     },
+    syncRenderDiffs: [
+      {
+        key: "mock.yaml",
+        mode: "C+",
+        absFilepath: "path/to",
+      },
+    ],
+    syncRenderResults: [
+      {
+        key: "mock.yaml",
+        mode: "M~",
+        error: "hahah",
+        published: true,
+        succeeded: true,
+      },
+    ],
+    syncStepsCurrent: 0,
+    syncModalVisible: false,
   }),
   mounted() {
     this.action = this.$route.params.action;
@@ -205,10 +399,27 @@ export default {
         notificationError(err);
       }
     );
-    // TODO(@yeqown): register event listener to recv event and data from background.
+
+    // DONE(@yeqown): register event listener to recv event and data from background.
+    bindEventOnce(EVENT_RENDER_DIFF, (data) => {
+      console.log("event render diff triggered", data);
+      this.syncRenderDiffs = data;
+      setTimeout(() => {
+        this.syncStepsCurrent++;
+      }, 1000);
+    });
+
+    bindEventOnce(EVENT_RENDER_RESULT, (data) => {
+      console.log("event render result triggered", data);
+      this.syncRenderResults = data;
+      setTimeout(() => {
+        this.syncStepsCurrent++;
+      }, 1000);
+    });
   },
   methods: {
     doSynchronize() {
+      console.log("============ form values", this.form);
       if (this.form.usingSettingIdx < 0) {
         notificationWarning("Please choose setting first!");
         return;
@@ -224,6 +435,14 @@ export default {
         return;
       }
 
+      if (
+        !this.action ||
+        (this.action !== "upload" && this.action !== "download")
+      ) {
+        notificationWarning("Unknown action!, please re-enter this page");
+        return;
+      }
+
       const setting = this.settings[this.form.usingSettingIdx];
       let scope = {
         portalAddr: setting.portalAddr,
@@ -234,20 +453,32 @@ export default {
         env: this.form.usingEnv,
         cluster: this.form.usingCluster,
         mode: modeMapping[this.action.toLowerCase()],
-        isForce: containsKey(this.form.optional, "force"), // FIXME(@yeqown): failed to get value from checkbox
-        isOverwrite: containsKey(this.form.optional, "overwrite"), // FIXME(@yeqown): failed to get value from checkbox
-        isAutoPublish: containsKey(this.form.optional, "autopublish"), // FIXME(@yeqown): failed to get value from checkbox
+        isForce: containsKey(this.form.optional, "force"),
+        isOverwrite: containsKey(this.form.optional, "overwrite"),
+        isAutoPublish: containsKey(this.form.optional, "autopublish"),
       };
 
       console.log("doSynchronize with scope=", scope);
       synchronize(scope).then(
-        () => {
-          notificationSuccess("Synchronize finished");
+        (result) => {
+          if (result.succeeded) {
+            notificationSuccess("Synchronize succeed!");
+          } else {
+            notificationError("Synchronize failed: " + result.failedReason);
+          }
         },
         (err) => {
+          // TODO(@yeqown): un-comment this line code to enable production ready.
+          // this.syncModalVisible = false;
           notificationError(err);
         }
       );
+
+      this.syncModalVisible = true;
+    },
+    confirmSynchronize() {
+      console.log("confirmSynchronize============");
+      inputDecide(decideMapping["confirm"]);
     },
     handleSettingChange(value) {
       // console.log("handleSettingChange", value);
@@ -271,8 +502,13 @@ export default {
   padding: 16px 24px;
 }
 
-/* #synchronize-form-container > h3 {
-  text-align: left;
-  font-weight: bold;
-} */
+#synchronize-render {
+}
+
+#step-content {
+  /* overflow: scroll; */
+  min-height: 300px;
+  width: 100%;
+  margin-top: 1em;
+}
 </style>

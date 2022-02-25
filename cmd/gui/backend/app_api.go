@@ -2,31 +2,13 @@ package backend
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	asy "github.com/yeqown/apollo-synchronizer"
 )
-
-// var (
-// 	synchronizerCache = make(map[string]asy.Synchronizer) // map[portalHash]synchronizer
-// )
-
-// func (b *App) getSynchronizer(portalHash string) asy.Synchronizer {
-// 	if s, ok := synchronizerCache[portalHash]; ok {
-// 		return s
-// 	}
-
-// 	b.infof("getSynchronizer: portalHash=%d, clusterSettings: %+v", portalHash, b.Clusters)
-// 	if b.Clusters == nil || portalHash == "" {
-// 		return nil
-// 	}
-
-// 	scope := b.Clusters[portalHash]
-// 	s := asy.NewSynchronizer(scope)
-// 	synchronizerCache[portalHash] = s
-
-// 	return s
-// }
 
 type SynchronizeScope struct {
 	ApolloPortalAddr  string              `json:"portalAddr"`
@@ -42,41 +24,91 @@ type SynchronizeScope struct {
 	Force             bool                `json:"isForce"`
 }
 
-func (b *App) Synchronize(scope2 *SynchronizeScope) error {
+type synchronizeResult struct {
+	Succeeded    bool   `json:"succeeded"`
+	FailedReason string `json:"failedReason"`
+}
+
+func (r *synchronizeResult) markSuccess() {
+	r.Succeeded = true
+	r.FailedReason = ""
+}
+
+func (r *synchronizeResult) markFailure(err error) {
+	r.Succeeded = false
+	r.FailedReason = "internal error"
+	if err != nil {
+		r.FailedReason = err.Error()
+	}
+}
+
+func (b *App) Synchronize(param *SynchronizeScope) (result *synchronizeResult) {
+	result = new(synchronizeResult)
+	defer func() {
+		switch param.Mode {
+		case asy.SynchronizeMode_DOWNLOAD:
+			b.statistics.DownloadCount++
+			if !result.Succeeded {
+				b.statistics.DownloadFailedCount++
+			}
+			// TODO(@yeqown): count download files and total file size.
+		case asy.SynchronizeMode_UPLOAD:
+			b.statistics.UploadCount++
+			if !result.Succeeded {
+				b.statistics.UploadFailedCount++
+			}
+			// TODO(@yeqown): count upload files and total file size.
+		}
+	}()
+
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	b.debugf("App.Synchronize called, scope: %+v\n", scope2)
-	return nil
+	b.debugf("App.Synchronize called, param: %+v\n", param)
+	// For debug
+	// return nil
+
+	apppath := filepath.Join(param.Path,
+		fmt.Sprintf("%s-%s-%s", param.ApolloAppID, param.ApolloEnv, param.ApolloClusterName))
+
+	if err := prepareAppPath(apppath); err != nil {
+		result.markFailure(err)
+		return result
+	}
+	localFiles := travelDirectory(apppath, false)
 
 	scope := asy.SynchronizeScope{
-		ApolloPortalAddr:  scope2.ApolloPortalAddr,
-		ApolloAccount:     scope2.ApolloAccount,
-		Path:              "",  // TODO(@yeqown)
-		LocalFiles:        nil, // TODO(@yeqown)
-		Mode:              scope2.Mode,
-		ApolloSecret:      scope2.ApolloSecret,
-		ApolloAppID:       scope2.ApolloAppID,
-		ApolloEnv:         scope2.ApolloEnv,
-		ApolloClusterName: scope2.ApolloClusterName,
-		ApolloAutoPublish: scope2.ApolloAutoPublish,
-		Overwrite:         scope2.Overwrite,
-		Force:             scope2.Force,
-		Render:            eventsRender{},
+		ApolloPortalAddr:  param.ApolloPortalAddr,
+		ApolloAccount:     param.ApolloAccount,
+		Path:              apppath,
+		LocalFiles:        localFiles,
+		Mode:              param.Mode,
+		ApolloSecret:      param.ApolloSecret,
+		ApolloAppID:       param.ApolloAppID,
+		ApolloEnv:         param.ApolloEnv,
+		ApolloClusterName: param.ApolloClusterName,
+		ApolloAutoPublish: param.ApolloAutoPublish,
+		Overwrite:         param.Overwrite,
+		Force:             param.Force,
+		Render:            newRender(b),
 	}
+	b.debugf("App.Synchronize called, scope: %+v\n", scope)
 
 	s, err := asy.NewSynchronizer(&scope)
 	if err != nil {
-		b.errorf("NewSynchronizer: %+v", err)
-		return err
+		b.errorf("build synchronizer failed: %+v", err)
+		result.markFailure(err)
+		return result
 	}
 
 	if err := s.Synchronize(ctx); err != nil {
 		b.errorf("synchronize failed: %v", err)
-		return err
+		result.markFailure(err)
+		return result
 	}
 
-	return nil
+	result.markSuccess()
+	return result
 }
 
 func (b *App) LoadSetting() []apolloClusterSetting {
@@ -91,4 +123,42 @@ func (b *App) SaveSetting(settings []apolloClusterSetting) {
 func (b *App) Statistics() statistics {
 	b.debugf("App.Statistics called, statistics: %+v\n", b.statistics)
 	return *b.statistics
+}
+
+func prepareAppPath(apppath string) error {
+	fi, err := os.Stat(apppath)
+	if err == nil && !fi.IsDir() {
+		return fmt.Errorf("%s is not a directory", apppath)
+	}
+
+	if err != nil {
+		if !os.IsNotExist(err) {
+
+			return fmt.Errorf("%s stat failed", apppath)
+		}
+
+		if err = os.MkdirAll(apppath, 0755); err != nil {
+			return fmt.Errorf("create directory(%s) failed: %v", apppath, err)
+		}
+	}
+
+	return nil
+}
+
+func travelDirectory(root string, recursive bool) []string {
+	files, err := os.ReadDir(root)
+	if err != nil {
+		fmt.Printf("failed to travelDirectory: %v\n", err)
+	}
+
+	out := make([]string, 0, len(files))
+	for _, fp := range files {
+		if fp.IsDir() {
+			continue
+		}
+
+		out = append(out, filepath.Join(root, fp.Name()))
+	}
+
+	return out
 }

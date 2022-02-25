@@ -154,11 +154,11 @@ func (s synchronizer) compare(
 }
 
 type SynchronizeResult struct {
-	Key       string
-	Mode      diffMode
-	Error     string // modified failed reason
-	Succeeded bool   // modified Succeeded
-	Published bool   // changes Published
+	Key       string   `json:"key"`
+	Mode      diffMode `json:"mode"`
+	Error     string   `json:"error"`     // modified failed reason
+	Succeeded bool     `json:"succeeded"` // modified Succeeded
+	Published bool     `json:"published"` // changes Published
 }
 
 // doSynchronize execute synchronization between local and remote.

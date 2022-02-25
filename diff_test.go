@@ -60,6 +60,26 @@ func Test_compare(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "case 3",
+			args: args{
+				from: []string{
+					"app1.json",
+					"app2.json",
+				},
+				to: []string{},
+			},
+			want: []Diff0{
+				{
+					Key:  "app1.json",
+					Mode: DiffMode_CREATE,
+				},
+				{
+					Key:  "app2.json",
+					Mode: DiffMode_CREATE,
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

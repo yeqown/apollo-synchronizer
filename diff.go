@@ -9,14 +9,14 @@ const (
 )
 
 type Diff0 struct {
-	Key  string
-	Mode diffMode
+	Key  string   `json:"key"`
+	Mode diffMode `json:"mode"`
 }
 
 type Diff1 struct {
 	Diff0
 
-	AbsFilepath string
+	AbsFilepath string `json:"absFilepath"`
 }
 
 type sorterDiff1 []Diff1

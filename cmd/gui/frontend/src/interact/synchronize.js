@@ -4,7 +4,7 @@ const modeMapping = {
 }
 
 const containsKey = (optional, key) => {
-    if (optional || !(optional instanceof Array)) {
+    if (optional === undefined || !(optional instanceof Array)) {
         return false
     }
 
@@ -19,4 +19,41 @@ const synchronize = (scope) => {
     return Promise.reject("No go.backend.App.Synchronize loaded");
 }
 
-export { modeMapping, containsKey, synchronize }
+const EVENT_RENDER_DIFF = "event.render.diff";
+const EVENT_RENDER_RESULT = "event.render.result";
+const EVENT_INPUT_DECIDE = "event.input.decide";
+
+
+const decideMapping = {
+    "confirm": 1,
+    "cancel": 2,
+}
+
+const inputDecide = (decide) => {
+    if (window.runtime && window.runtime.EventsEmit) {
+        window.runtime.EventsEmit(EVENT_INPUT_DECIDE, decide);
+        return
+    }
+
+    // DO NOTHING, just for mock
+    console.warn("window.runtime.EventEmit unavailable!");
+    return
+}
+
+const bindEventOnce = (event, cb) => {
+    if (window.runtime && window.runtime.EventsOnce) {
+        window.runtime.EventsOnce(event, cb);
+        return
+    }
+
+    // DO NOTHING, just for mock
+    console.warn("window.runtime.EventsOnce unavailable!");
+    return
+}
+
+export {
+    modeMapping, containsKey, synchronize,
+    bindEventOnce,
+    EVENT_RENDER_DIFF, EVENT_RENDER_RESULT, EVENT_INPUT_DECIDE,
+    decideMapping, inputDecide
+}
