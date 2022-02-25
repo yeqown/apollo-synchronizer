@@ -51,13 +51,11 @@ func (b *App) Synchronize(param *SynchronizeScope) (result *synchronizeResult) {
 			if !result.Succeeded {
 				b.statistics.DownloadFailedCount++
 			}
-			// TODO(@yeqown): count download files and total file size.
 		case asy.SynchronizeMode_UPLOAD:
 			b.statistics.UploadCount++
 			if !result.Succeeded {
 				b.statistics.UploadFailedCount++
 			}
-			// TODO(@yeqown): count upload files and total file size.
 		}
 	}()
 
@@ -101,10 +99,27 @@ func (b *App) Synchronize(param *SynchronizeScope) (result *synchronizeResult) {
 		return result
 	}
 
-	if err := s.Synchronize(ctx); err != nil {
+	results, err := s.Synchronize(ctx)
+	if err != nil {
 		b.errorf("synchronize failed: %v", err)
 		result.markFailure(err)
 		return result
+	}
+
+	// file and size statistics
+	{
+		switch param.Mode {
+		case asy.SynchronizeMode_UPLOAD:
+			b.statistics.UploadFileCount += int64(len(results))
+			for _, v := range results {
+				b.statistics.UploadFileSize += int64(v.Bytes)
+			}
+		case asy.SynchronizeMode_DOWNLOAD:
+			b.statistics.DownloadFileCount += int64(len(results))
+			for _, v := range results {
+				b.statistics.DownloadFileSize += int64(v.Bytes)
+			}
+		}
 	}
 
 	result.markSuccess()

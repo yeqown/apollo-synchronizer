@@ -7,7 +7,7 @@ import (
 
 // Synchronizer 's duty is synchronizing between remote apollo portal and local filesystem.
 type Synchronizer interface {
-	Synchronize(ctx context.Context) error
+	Synchronize(ctx context.Context) ([]*SynchronizeResult, error)
 }
 
 type SynchronizeMode uint8

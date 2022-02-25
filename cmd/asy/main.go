@@ -52,7 +52,8 @@ func action(c *cli.Context) error {
 		return errors.Wrap(err, "create synchronizer failed")
 	}
 
-	return s.Synchronize(context.Background())
+	_, err = s.Synchronize(context.Background())
+	return err
 }
 
 var flags = []cli.Flag{

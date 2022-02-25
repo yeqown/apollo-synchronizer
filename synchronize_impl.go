@@ -47,13 +47,13 @@ func NewSynchronizer(scope *SynchronizeScope) (Synchronizer, error) {
 
 // Synchronize scheduling components to display information and execute CURD action with resources.
 // NOTICE: properties will be ignored.
-func (s *synchronizer) Synchronize(ctx context.Context) error {
+func (s *synchronizer) Synchronize(ctx context.Context) ([]*SynchronizeResult, error) {
 	scope := s.scope
 	log.Info("prepare to fetching remote namespace resources. please wait")
 	// load app/env/cluster/remote info
 	namespaceInfos, err := s.apollo.ListNamespaces(ctx, scope.ApolloAppID, scope.ApolloEnv, scope.ApolloClusterName)
 	if err != nil {
-		return errors.Wrap(err, "failed to ListNamespaces in synchronizer.Synchronize")
+		return nil, errors.Wrap(err, "failed to ListNamespaces in synchronizer.Synchronize")
 	}
 	namespaces := make([]string, 0, len(namespaceInfos))
 	for _, v := range namespaceInfos {
@@ -96,15 +96,15 @@ func (s *synchronizer) Synchronize(ctx context.Context) error {
 	default:
 		// interrupt the synchronization
 		log.Info("you cancel the synchronization. quit")
-		return nil
+		return nil, nil
 	}
 
 	log.Info("synchronizing ...")
-	syncResults := s.doSynchronize(scope, diffs)
+	results := s.doSynchronize(scope, diffs)
 	log.Info("synchronization finished, please check the result")
-	s.renderingResult(syncResults)
+	s.renderingResult(results)
 
-	return nil
+	return results, nil
 }
 
 // compare calculates the difference between local and remote.
@@ -159,6 +159,7 @@ type SynchronizeResult struct {
 	Error     string   `json:"error"`     // modified failed reason
 	Succeeded bool     `json:"succeeded"` // modified Succeeded
 	Published bool     `json:"published"` // changes Published
+	Bytes     int      `json:"bytes"`     // file size (byte)
 }
 
 // doSynchronize execute synchronization between local and remote.
@@ -224,6 +225,7 @@ func (s synchronizer) download(ctx context.Context, d Diff1) (r *SynchronizeResu
 		Succeeded: false,
 		// download always Published by default since it has no version control mechanism.
 		Published: true,
+		Bytes:     0,
 	}
 	var err error
 
@@ -239,6 +241,7 @@ func (s synchronizer) download(ctx context.Context, d Diff1) (r *SynchronizeResu
 			err = err2
 			goto Failed
 		}
+		r.Bytes = len([]byte(item.Value))
 		err = os.WriteFile(d.AbsFilepath, []byte(item.Value), 0644)
 	}
 
@@ -280,6 +283,7 @@ func (s synchronizer) upload(ctx context.Context, d Diff1, autoPublish bool) (r 
 			err = err2
 			goto Failed
 		}
+		r.Bytes = len(bytes)
 		_, err = s.apollo.CreateNamespace(ctx,
 			namespaceName, s.scope.ApolloAppID, api.Format(format), false, "created by apollo-synchronizer")
 		if err != nil {
