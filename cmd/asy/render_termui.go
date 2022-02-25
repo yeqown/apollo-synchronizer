@@ -60,7 +60,7 @@ func (t termuiRenderer) wait() (err error) {
 	return nil
 }
 
-func (t termuiRenderer) RenderingDiffs(diffs []asy.Diff1) asy.Decide {
+func (t termuiRenderer) RenderingDiffs(diffs []asy.Diff1) (d asy.Decide, reason string) {
 	t.initUI()
 	x, y := ui.TerminalDimensions()
 
@@ -149,11 +149,11 @@ PortalAddress: %s
 	ui.Render(p0, p1, l1, p2, l2, l3)
 	if err := t.wait(); err != nil {
 		if errors.Is(err, errEnter) {
-			return asy.Decide_CONFIRMED
+			return asy.Decide_CONFIRMED, "user decided"
 		}
 	}
 
-	return asy.Decide_CANCELLED
+	return asy.Decide_CANCELLED, "user decided"
 }
 
 func (t termuiRenderer) RenderingResult(results []*asy.SynchronizeResult) {

@@ -14,28 +14,28 @@ func newTerminalUI() asy.Renderer {
 	return &terminalRenderer{}
 }
 
-func (t terminalRenderer) RenderingDiffs(diffs []asy.Diff1) asy.Decide {
+func (t terminalRenderer) RenderingDiffs(diffs []asy.Diff1) (d asy.Decide, reason string) {
 	fmt.Printf("=================== synchronize differences ===================\n")
 
-	display := func(d asy.Diff1) {
+	display := func(dif asy.Diff1) {
 		modeText := ""
-		switch d.Mode {
+		switch dif.Mode {
 		case asy.DiffMode_DELETE:
-			modeText = red(string(d.Mode))
+			modeText = red(string(dif.Mode))
 		case asy.DiffMode_MODIFY:
-			modeText = yellow(string(d.Mode))
+			modeText = yellow(string(dif.Mode))
 		case asy.DiffMode_CREATE:
-			modeText = green(string(d.Mode))
+			modeText = green(string(dif.Mode))
 		}
 
-		fmt.Printf("%s %15s\t%s\n", modeText, d.Key, d.AbsFilepath)
+		fmt.Printf("%s %15s\t%s\n", modeText, dif.Key, dif.AbsFilepath)
 	}
 
 	for _, d := range diffs {
 		display(d)
 	}
 
-	return asy.Decide_CONFIRMED
+	return asy.Decide_CONFIRMED, "auto confirmed since there are no interactive"
 }
 
 func (t terminalRenderer) RenderingResult(results []*asy.SynchronizeResult) {

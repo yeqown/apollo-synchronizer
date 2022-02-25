@@ -23,7 +23,7 @@ func (d Decide) String() string {
 type Renderer interface {
 	// RenderingDiffs display the diffs and make a decision to control the synchronization
 	// should go on or abort now.
-	RenderingDiffs(diffs []Diff1) Decide
+	RenderingDiffs(diffs []Diff1) (d Decide, reason string)
 
 	// RenderingResult display the result of synchronization.
 	RenderingResult(results []*SynchronizeResult)

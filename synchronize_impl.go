@@ -2,6 +2,7 @@ package asy
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -89,14 +90,14 @@ func (s *synchronizer) Synchronize(ctx context.Context) ([]*SynchronizeResult, e
 		}).
 		Info("compare result")
 	// let user Decide what to do next, continue or cancel?
-	switch s.renderingDiffs(diffs) {
+	switch decide, reason := s.renderingDiffs(diffs); decide {
 	case Decide_CONFIRMED:
 	case Decide_CANCELLED:
 		fallthrough
 	default:
 		// interrupt the synchronization
 		log.Info("you cancel the synchronization. quit")
-		return nil, nil
+		return nil, fmt.Errorf("synchronization cancelled: %s", reason)
 	}
 
 	log.Info("synchronizing ...")
@@ -333,9 +334,9 @@ Failed:
 	return
 }
 
-func (s synchronizer) renderingDiffs(diffs []Diff1) Decide {
+func (s synchronizer) renderingDiffs(diffs []Diff1) (d Decide, reason string) {
 	if s.scope.Render == nil {
-		return Decide_CONFIRMED
+		return Decide_CONFIRMED, "auto confirmed since there is no render"
 	}
 
 	return s.scope.Render.RenderingDiffs(diffs)

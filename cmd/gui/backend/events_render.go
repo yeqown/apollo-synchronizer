@@ -32,7 +32,7 @@ type eventsRender struct {
 	app *App
 }
 
-func (r eventsRender) RenderingDiffs(diffs []asy.Diff1) (d asy.Decide) {
+func (r eventsRender) RenderingDiffs(diffs []asy.Diff1) (d asy.Decide, reason string) {
 	r.app.infof("RenderingDiffs: %+v", diffs)
 
 	decideChan := make(chan asy.Decide, 1)
@@ -65,14 +65,15 @@ func (r eventsRender) RenderingDiffs(diffs []asy.Diff1) (d asy.Decide) {
 	select {
 	case d = <-decideChan:
 		r.app.infof("Input decide: %+v", d)
+		reason = "user decided"
 	case <-timeout.C:
 		r.app.errorf("Timeout waiting for decide")
 		d = asy.Decide_CANCELLED
+		reason = "timeout"
 	}
+	r.app.infof("final decide: %+v, reason: %s", d, reason)
 
-	r.app.infof("final decide: %+v", d)
-
-	return d
+	return d, reason
 }
 
 func (r eventsRender) RenderingResult(results []*asy.SynchronizeResult) {
