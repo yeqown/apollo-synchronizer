@@ -87,17 +87,14 @@ func (b *App) OnStartup(ctx context.Context) {
 	// register a menu item
 	mymenu := menu.NewMenuFromItems(
 		menu.SubMenu("", menu.NewMenuFromItems(
-			menu.Text("About", nil, b.about),
+			menu.Text("Preferences", keys.CmdOrCtrl(","), b.openPreferences),
 			menu.Separator(),
+			menu.Text("About", nil, b.about),
 			menu.Text("Quit", keys.CmdOrCtrl("q"), func(_ *menu.CallbackData) {
 				runtime.Quit(ctx)
 			}),
 		)),
-		menu.SubMenu("Settings", menu.NewMenuFromItems(
-			menu.Text("ConfigPath", nil, b.setConfigPath),
-			menu.Separator(),
-			menu.Text("Preferences", keys.CmdOrCtrl("p"), b.openPreferences),
-		)),
+		menu.EditMenu(),
 	)
 	runtime.MenuSetApplicationMenu(ctx, mymenu)
 }
