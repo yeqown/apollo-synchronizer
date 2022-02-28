@@ -51,9 +51,20 @@ const bindEventOnce = (event, cb) => {
     return
 }
 
+const unbindEvent = (event) => {
+    if (window.runtime && window.runtime.EventsOff) {
+        window.runtime.EventsOff(event);
+        return
+    }
+
+    // DO NOTHING, just for mock
+    console.warn("window.runtime.EventsOff unavailable!");
+    return
+}
+
 export {
     modeMapping, containsKey, synchronize,
-    bindEventOnce,
+    bindEventOnce, unbindEvent,
     EVENT_RENDER_DIFF, EVENT_RENDER_RESULT, EVENT_INPUT_DECIDE,
     decideMapping, inputDecide
 }

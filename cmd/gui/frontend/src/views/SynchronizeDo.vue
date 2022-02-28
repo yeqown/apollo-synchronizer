@@ -175,7 +175,7 @@
       width="100%"
       :closable="true"
       :footer="null"
-      @afterClose="handleModalCloseCallback"
+      :afterClose="handleModalCloseCallback"
     >
       <div id="synchronize-render" style="width: 100%">
         <a-steps :current="syncStepsCurrent">
@@ -224,6 +224,7 @@
                   :data-source="syncRenderDiffs"
                   size="small"
                   bordered
+                  :scroll="{ y: 250 }"
                 >
                   <template #operation="{ text }">
                     <!-- render yellow text when text is 'M~', green text when text is 'C+', red text when text is 'D-' -->
@@ -277,6 +278,7 @@
                   :data-source="syncRenderResults"
                   size="small"
                   bordered
+                  :scroll="{ y: 250 }"
                 >
                   <template #operation="{ text }">
                     <!-- render yellow text when text is 'M~', green text when text is 'C+', red text when text is 'D-' -->
@@ -313,7 +315,7 @@
                     type="primary"
                     @click="
                       () => {
-                        ++syncStepsCurrent;
+                        syncStepsCurrent = 3;
                       }
                     "
                     :disabled="!syncContinueAble"
@@ -394,6 +396,7 @@ import {
   containsKey,
   synchronize,
   bindEventOnce,
+  unbindEvent,
   EVENT_RENDER_DIFF,
   EVENT_RENDER_RESULT,
   inputDecide,
@@ -482,18 +485,24 @@ export default {
     bindEventOnce(EVENT_RENDER_DIFF, (data) => {
       console.log("event render diff triggered", data);
       this.syncRenderDiffs = data;
-      this.loading = false;
       setTimeout(() => {
-        this.syncStepsCurrent++;
+        this.loading = false;
+        this.syncStepsCurrent = 1;
       }, 1000);
     });
 
     bindEventOnce(EVENT_RENDER_RESULT, (data) => {
       console.log("event render result triggered", data);
       this.syncRenderResults = data;
-      this.loading = false;
-      this.syncStepsCurrent++;
+      setTimeout(() => {
+        this.loading = false;
+        this.syncStepsCurrent = 2;
+      }, 500);
     });
+  },
+  unmounted() {
+    unbindEvent(EVENT_RENDER_DIFF);
+    unbindEvent(EVENT_RENDER_RESULT);
   },
   methods: {
     doSynchronize() {
@@ -536,6 +545,14 @@ export default {
         isAutoPublish: containsKey(this.form.optional, "autopublish"),
       };
 
+      const quickFail = (reason) => {
+        this.syncStepsCurrent = 3;
+        this.syncResult = {
+          success: false,
+          failedReason: reason,
+        };
+      };
+
       console.log("doSynchronize with scope=", scope);
       synchronize(scope).then(
         (result) => {
@@ -547,21 +564,13 @@ export default {
             };
           } else {
             notificationError("Synchronize failed: " + result.failedReason);
-            this.syncStepsCurrent = 3;
-            this.syncResult = {
-              success: false,
-              failedReason: result.failedReason,
-            };
+            quickFail(result.failedReason);
           }
         },
         (err) => {
           notificationError(err);
           this.syncContinueAble = false;
-          this.syncStepsCurrent = 3;
-          this.syncResult = {
-            success: false,
-            failedReason: err,
-          };
+          quickFail(err);
         }
       );
 
@@ -580,6 +589,7 @@ export default {
       this.form.usingCluster = "";
     },
     handleModalCloseCallback() {
+      console.log("handleModalCloseCallback called");
       // modal close callback
       this.loading = false;
       this.syncStepsCurrent = 0;
@@ -606,11 +616,12 @@ export default {
 
 #synchronize-render {
   margin-top: 1.5em;
+  max-height: 450px;
 }
 
 #step-content {
   /* overflow: scroll; */
-  min-height: 300px;
+  height: 300px;
   width: 100%;
   margin-top: 1em;
 }
