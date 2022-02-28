@@ -173,119 +173,172 @@
     <a-modal
       v-model:visible="syncModalVisible"
       width="100%"
-      :closable="false"
-      @onCancel="() => (syncModalVisible = false)"
+      :closable="true"
+      :footer="null"
+      @afterClose="handleModalCloseCallback"
     >
       <div id="synchronize-render" style="width: 100%">
         <a-steps :current="syncStepsCurrent">
-          <a-step title="Prepare">
-            <template #icon>
-              <a-cloud-upload-outlined />
-            </template>
+          <a-step title="Fetch">
+            ><template #icon><a-file-sync-outlined /> </template>
           </a-step>
-          <a-step title="Fetch and Decide"
-            ><template #icon> <a-cloud-upload-outlined /> </template
+          <a-step title="Decide"
+            ><template #icon> <a-code-outlined /></template
           ></a-step>
-          <a-step title="Synchronize"
-            ><template #icon> <a-cloud-upload-outlined /> </template
+          <a-step title="Execute"
+            ><template #icon> <a-cloud-sync-outlined /> </template
           ></a-step>
-          <a-step title="Done"
-            ><template #icon> <a-cloud-upload-outlined /> </template
+          <a-step title="Result"
+            ><template #icon> <a-notification-outlined /> </template
           ></a-step>
         </a-steps>
 
         <div id="step-content">
           <div>
-            <template v-if="syncStepsCurrent === 0">
-              <a-result title="Fetching namespaces from apollo, please wait!">
-                <template #icon>
-                  <a-sync-outlined spin />
-                </template>
-              </a-result>
-            </template>
+            <a-spin tip="executing, wait please" :spinning="loading">
+              <template v-if="syncStepsCurrent === 0">
+                <a-result title="Fetching namespaces from apollo, please wait!">
+                  <template #icon>
+                    <a-sync-outlined spin />
+                  </template>
+                </a-result>
+              </template>
 
-            <template v-if="syncStepsCurrent === 1">
-              <a-table
-                :columns="[
-                  { title: 'Namespace', dataIndex: 'key', key: 'key' },
-                  { title: 'Mode', dataIndex: 'mode', key: 'mode' },
-                  {
-                    title: 'File',
-                    dataIndex: 'absFilepath',
-                    key: 'absFilepath',
-                  },
-                ]"
-                :pagination="{ hideOnSinglePage: true }"
-                :data-source="syncRenderDiffs"
-                size="small"
-              >
-                <template #headerCell="{ column }">
-                  <template v-if="column.key === 'mode'">
-                    <span>
-                      <a-question-circle-two-tone />
-                      Operation
-                      <!-- <a-popover>
-                      <template #content>
-                        <p>
-                          C+ means creation, M~ means modification, D- means
-                          deletion
-                        </p>
-                      </template>
-                    </a-popover> -->
+              <template v-if="syncStepsCurrent === 1">
+                <a-table
+                  :columns="[
+                    { title: 'Namespace', dataIndex: 'key', key: 'key' },
+                    {
+                      title: 'Operation',
+                      dataIndex: 'mode',
+                      key: 'mode',
+                      slots: { customRender: 'operation' },
+                    },
+                    {
+                      title: 'File',
+                      dataIndex: 'absFilepath',
+                      key: 'absFilepath',
+                    },
+                  ]"
+                  :pagination="{ hideOnSinglePage: true }"
+                  :data-source="syncRenderDiffs"
+                  size="small"
+                  bordered
+                >
+                  <template #operation="{ text }">
+                    <!-- render yellow text when text is 'M~', green text when text is 'C+', red text when text is 'D-' -->
+                    <span v-if="text === 'M~'">
+                      <a-tag color="orange">M~</a-tag>
+                    </span>
+                    <span v-if="text === 'C+'">
+                      <a-tag color="green">C+</a-tag>
+                    </span>
+                    <span v-if="text === 'D-'">
+                      <a-tag color="#f50">D-</a-tag>
                     </span>
                   </template>
-                </template>
+                </a-table>
 
-                <template #bodyCell="{ column, record }">
-                  {{ column.key }} / {{ record }}
-                </template>
-              </a-table>
+                <a-button
+                  type="primary"
+                  @click="confirmSynchronize"
+                  :disabled="!syncContinueAble"
+                  :loading="loading"
+                  >Confirm</a-button
+                >
+              </template>
 
-              <a-button type="primary" @click="confirmSynchronize"
-                >Confirm</a-button
-              >
-            </template>
-
-            <template v-if="syncStepsCurrent === 2">
-              <a-table
-                :columns="[
-                  { title: 'Namespace', dataIndex: 'key', key: 'key' },
-                  { title: 'Operation', dataIndex: 'mode', key: 'mode' },
-                  { title: 'Result', dataIndex: 'error', key: 'result' },
-                  {
-                    title: 'Published',
-                    dataIndex: 'published',
-                    key: 'published',
-                  },
-                ]"
-                :pagination="{ hideOnSinglePage: true }"
-                :data-source="syncRenderResults"
-                size="small"
-              >
-                <template #bodyCell="{ column, record }">
-                  <template v-if="column.key === 'result'">
-                    <span v-if="record.succeeded"> success </span>
-                    <span v-else>Failed: {{ record.error || "--" }}</span>
+              <template v-if="syncStepsCurrent === 2">
+                <a-table
+                  :columns="[
+                    { title: 'Namespace', dataIndex: 'key', key: 'key' },
+                    {
+                      title: 'Operation',
+                      dataIndex: 'mode',
+                      key: 'mode',
+                      slots: { customRender: 'operation' },
+                    },
+                    {
+                      title: 'Executed Result',
+                      dataIndex: 'error',
+                      key: 'result',
+                      slots: { customRender: 'result' },
+                    },
+                    {
+                      title: 'Published',
+                      dataIndex: 'published',
+                      key: 'published',
+                      slots: { customRender: 'published' },
+                    },
+                  ]"
+                  :pagination="{ hideOnSinglePage: true }"
+                  :data-source="syncRenderResults"
+                  size="small"
+                  bordered
+                >
+                  <template #operation="{ text }">
+                    <!-- render yellow text when text is 'M~', green text when text is 'C+', red text when text is 'D-' -->
+                    <span v-if="text === 'M~'">
+                      <a-tag color="orange">M~</a-tag>
+                    </span>
+                    <span v-if="text === 'C+'">
+                      <a-tag color="green">C+</a-tag>
+                    </span>
+                    <span v-if="text === 'D-'">
+                      <a-tag color="#f50">D-</a-tag>
+                    </span>
                   </template>
-                </template>
-              </a-table>
-              <a-button type="primary" @click="() => renderStepsCurrent++"
-                >Continue</a-button
-              >
-            </template>
 
-            <!-- setp 4 -->
-            <template v-if="syncStepsCurrent === 3">
-              <a-result status="success" title="Synchronize Successfully!">
-              </a-result>
-            </template>
+                  <template #result="{ text, record }">
+                    <a-badge
+                      dot
+                      :color="record.succeeded ? 'green' : 'orange'"
+                      :text="record.succeeded ? '' : text"
+                    />
+                  </template>
+
+                  <template #published="{ record }">
+                    <!-- render red badge if text.published is true otherwire render green badge -->
+                    <a-badge
+                      dot
+                      :color="record.published ? 'green' : 'orange'"
+                    />
+                  </template>
+                </a-table>
+                <a-button
+                  type="primary"
+                  @click="
+                    () => {
+                      ++syncStepsCurrent;
+                    }
+                  "
+                  :disabled="!syncContinueAble"
+                  :loading="loading"
+                  >Continue</a-button
+                >
+              </template>
+
+              <!-- setp 4 -->
+              <template v-if="syncStepsCurrent === 3">
+                <a-result
+                  :status="syncResult.success ? 'success' : 'error'"
+                  :title="
+                    syncResult.success
+                      ? 'Synchronize Successfully!'
+                      : syncResult.failedReason
+                  "
+                >
+                </a-result>
+              </template>
+            </a-spin>
           </div>
 
-          <a-button
+          <!-- button for debug -->
+          <!-- <a-button
             type="primary"
             @click="() => (syncStepsCurrent = ++syncStepsCurrent % 4)"
             >Debug Next</a-button
-          >
+          > -->
         </div>
       </div>
     </a-modal>
@@ -311,12 +364,19 @@ import {
   Step,
   Result,
   Table,
+  Tag,
+  Badge,
+  Spin,
 } from "ant-design-vue";
 import {
   CloudDownloadOutlined,
   CloudUploadOutlined,
   QuestionCircleTwoTone,
   SyncOutlined,
+  NotificationOutlined,
+  CodeOutlined,
+  CloudSyncOutlined,
+  FileSyncOutlined,
 } from "@ant-design/icons-vue";
 import { loadSetting } from "../interact/setting";
 import {
@@ -354,13 +414,21 @@ export default {
     AStep: Step,
     AResult: Result,
     ATable: Table,
+    ATag: Tag,
+    ABadge: Badge,
+    ASpin: Spin,
     // icons
     ACloudDownloadOutlined: CloudDownloadOutlined,
     ACloudUploadOutlined: CloudUploadOutlined,
     AQuestionCircleTwoTone: QuestionCircleTwoTone,
     ASyncOutlined: SyncOutlined,
+    ACloudSyncOutlined: CloudSyncOutlined,
+    ANotificationOutlined: NotificationOutlined,
+    ACodeOutlined: CodeOutlined,
+    AFileSyncOutlined: FileSyncOutlined,
   },
   data: () => ({
+    loading: false,
     settings: [],
     action: "unknown",
     form: {
@@ -371,23 +439,28 @@ export default {
       optional: ["force", "overwrite"],
     },
     syncRenderDiffs: [
-      {
-        key: "mock.yaml",
-        mode: "C+",
-        absFilepath: "path/to",
-      },
+      // {
+      //   key: "mock.yaml",
+      //   mode: "C+",
+      //   absFilepath: "path/to",
+      // },
     ],
+    syncContinueAble: true,
     syncRenderResults: [
-      {
-        key: "mock.yaml",
-        mode: "M~",
-        error: "hahah",
-        published: true,
-        succeeded: true,
-      },
+      // {
+      //   key: "mock.yaml",
+      //   mode: "M~",
+      //   error: "hahah",
+      //   published: true,
+      //   succeeded: true,
+      // },
     ],
     syncStepsCurrent: 0,
     syncModalVisible: false,
+    syncResult: {
+      success: false,
+      failedReason: "",
+    },
   }),
   mounted() {
     this.action = this.$route.params.action;
@@ -404,6 +477,7 @@ export default {
     bindEventOnce(EVENT_RENDER_DIFF, (data) => {
       console.log("event render diff triggered", data);
       this.syncRenderDiffs = data;
+      this.loading = false;
       setTimeout(() => {
         this.syncStepsCurrent++;
       }, 1000);
@@ -412,6 +486,7 @@ export default {
     bindEventOnce(EVENT_RENDER_RESULT, (data) => {
       console.log("event render result triggered", data);
       this.syncRenderResults = data;
+      this.loading = false;
       setTimeout(() => {
         this.syncStepsCurrent++;
       }, 1000);
@@ -463,14 +538,27 @@ export default {
         (result) => {
           if (result.succeeded) {
             notificationSuccess("Synchronize succeed!");
+            this.syncResult = {
+              success: true,
+              failedReason: "",
+            };
           } else {
             notificationError("Synchronize failed: " + result.failedReason);
+            this.syncStepsCurrent = 3;
+            this.syncResult = {
+              success: false,
+              failedReason: result.failedReason,
+            };
           }
         },
         (err) => {
-          // TODO(@yeqown): un-comment this line code to enable production ready.
-          // this.syncModalVisible = false;
           notificationError(err);
+          this.syncContinueAble = false;
+          this.syncStepsCurrent = 3;
+          this.syncResult = {
+            success: false,
+            failedReason: err,
+          };
         }
       );
 
@@ -479,6 +567,7 @@ export default {
     confirmSynchronize() {
       console.log("confirmSynchronize============");
       inputDecide(decideMapping["confirm"]);
+      this.loading = true;
     },
     handleSettingChange(value) {
       // console.log("handleSettingChange", value);
@@ -486,6 +575,15 @@ export default {
       // reset related fields
       this.form.usingEnv = "";
       this.form.usingCluster = "";
+    },
+    handleModalCloseCallback() {
+      // modal close callback
+      this.loading = false;
+      this.syncStepsCurrent = 0;
+      this.loading = false;
+      this.syncRenderDiffs = [];
+      this.syncRenderResults = [];
+      this.syncResult = { success: false, failedReason: "unset" };
     },
   },
 };
@@ -503,6 +601,7 @@ export default {
 }
 
 #synchronize-render {
+  margin-top: 1.5em;
 }
 
 #step-content {
