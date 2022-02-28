@@ -50,7 +50,7 @@
         <!-- upload -->
         <div class="statistics-container">
           <a-statistic
-            title="Upload Total"
+            title="Upload Failed/Total"
             :value="_formatNumber(statistics.uploadFailedCount)"
             class="statistics-item"
           >
@@ -73,7 +73,7 @@
         <!-- download -->
         <div class="statistics-container">
           <a-statistic
-            title="Download Total"
+            title="Download Failed/Total"
             :value="_formatNumber(statistics.downloadFailedCount)"
             class="statistics-item"
           >
@@ -101,7 +101,9 @@
         <h3 style="color: #03a9f4; font-weight: bold; font-size: 1.4em">
           #Document#
         </h3>
-        <a>https://github.com/yeqown/apollo-synchronizer</a>
+        <a @click="openURL('https://github.com/yeqown/apollo-synchronizer')"
+          >https://github.com/yeqown/apollo-synchronizer</a
+        >
       </div>
     </div>
     <!-- dashboard content end here -->
@@ -150,6 +152,11 @@ export default {
     },
     _formatNumber(num) {
       return formatNumber(num);
+    },
+    _openURL(url) {
+      if (window.runtime && window.runtime.BrowserOpenURL) {
+        window.runtime.BrowserOpenURL(url);
+      }
     },
   },
   mounted() {

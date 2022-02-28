@@ -239,13 +239,15 @@
                   </template>
                 </a-table>
 
-                <a-button
-                  type="primary"
-                  @click="confirmSynchronize"
-                  :disabled="!syncContinueAble"
-                  :loading="loading"
-                  >Confirm</a-button
-                >
+                <div class="step-content-footer">
+                  <a-button
+                    type="primary"
+                    @click="confirmSynchronize"
+                    :disabled="!syncContinueAble"
+                    :loading="loading"
+                    >Confirm</a-button
+                  >
+                </div>
               </template>
 
               <template v-if="syncStepsCurrent === 2">
@@ -305,17 +307,20 @@
                     />
                   </template>
                 </a-table>
-                <a-button
-                  type="primary"
-                  @click="
-                    () => {
-                      ++syncStepsCurrent;
-                    }
-                  "
-                  :disabled="!syncContinueAble"
-                  :loading="loading"
-                  >Continue</a-button
-                >
+
+                <div class="step-content-footer">
+                  <a-button
+                    type="primary"
+                    @click="
+                      () => {
+                        ++syncStepsCurrent;
+                      }
+                    "
+                    :disabled="!syncContinueAble"
+                    :loading="loading"
+                    >Continue</a-button
+                  >
+                </div>
               </template>
 
               <!-- setp 4 -->
@@ -487,9 +492,7 @@ export default {
       console.log("event render result triggered", data);
       this.syncRenderResults = data;
       this.loading = false;
-      setTimeout(() => {
-        this.syncStepsCurrent++;
-      }, 1000);
+      this.syncStepsCurrent++;
     });
   },
   methods: {
@@ -592,11 +595,12 @@ export default {
 <style scoped>
 #synchronize-form-container {
   width: 100%;
+  max-width: 800px;
   display: flex;
   justify-content: center;
 
   background: #ffffff;
-  height: 400px;
+  min-height: 400px;
   padding: 16px 24px;
 }
 
@@ -609,5 +613,11 @@ export default {
   min-height: 300px;
   width: 100%;
   margin-top: 1em;
+}
+
+.step-content-footer {
+  display: flex;
+  margin-top: 1em;
+  justify-content: center;
 }
 </style>

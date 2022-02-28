@@ -13,7 +13,9 @@
       "
     >
       <div class="logo-container">
-        <div id="logo" />
+        <div id="logo">
+          <img alt="logo" src="logo.png" style="width: 100%" />
+        </div>
       </div>
       <a-menu
         mode="horizontal"
@@ -23,14 +25,14 @@
         @select="handleMenuSelect"
       >
         <a-menu-item key="dashboard" style="line-height: 48px">
-          <template #icon> <DashboardTwoTone /> </template>Welcome</a-menu-item
+          <template #icon> <DashboardOutlined /> </template>Welcome</a-menu-item
         >
         <a-menu-item key="synchronize" style="line-height: 48px"
           ><template #icon> <SyncOutlined two-tone-color="#1890ff" /> </template
           >Synchronize</a-menu-item
         >
         <a-menu-item key="setting" style="line-height: 48px"
-          ><template #icon> <SettingTwoTone /> </template>Setting</a-menu-item
+          ><template #icon> <SettingOutlined /> </template>Setting</a-menu-item
         >
       </a-menu>
     </a-layout-header>
@@ -54,9 +56,9 @@ import {
   // Affix,
 } from "ant-design-vue";
 import {
-  SettingTwoTone,
+  SettingOutlined,
   SyncOutlined,
-  DashboardTwoTone,
+  DashboardOutlined,
 } from "@ant-design/icons-vue";
 export default {
   name: "App",
@@ -70,9 +72,9 @@ export default {
     AMenuItem: MenuItem,
     // AAffix: Affix,
     // icons
-    SettingTwoTone,
+    SettingOutlined,
     SyncOutlined,
-    DashboardTwoTone,
+    DashboardOutlined,
   },
   data() {
     return {
@@ -138,6 +140,6 @@ export default {
   width: 100%;
   height: 48px;
   line-height: 48px;
-  background: #e6f7ff;
+  background: #fbfbfe;
 }
 </style>
