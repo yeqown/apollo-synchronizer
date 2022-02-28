@@ -101,7 +101,7 @@
         <h3 style="color: #03a9f4; font-weight: bold; font-size: 1.4em">
           #Document#
         </h3>
-        <a @click="openURL('https://github.com/yeqown/apollo-synchronizer')"
+        <a @click="_openURL('https://github.com/yeqown/apollo-synchronizer')"
           >https://github.com/yeqown/apollo-synchronizer</a
         >
       </div>
