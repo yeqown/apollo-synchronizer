@@ -368,9 +368,9 @@ export default {
     },
     save() {
       saveSetting(this.settings).then(
-        (result) => {
+        () => {
           // console.log(this.settings);
-          console.log("SaveSettings called: ", result);
+          console.log("SaveSettings called: ");
           notificationSuccess("All settings have been saved.");
           this.modified = false;
         },

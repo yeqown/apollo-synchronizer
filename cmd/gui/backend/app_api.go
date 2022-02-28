@@ -130,9 +130,9 @@ func (b *App) LoadSetting() []apolloClusterSetting {
 	return b.config.Settings
 }
 
-func (b *App) SaveSetting(settings []apolloClusterSetting) {
+func (b *App) SaveSetting(settings []apolloClusterSetting) error {
 	b.config.Settings = settings
-	save(_configFp, b.config, _ext_json)
+	return save(_configFp, b.config, _ext_json)
 }
 
 func (b *App) Statistics() statistics {
