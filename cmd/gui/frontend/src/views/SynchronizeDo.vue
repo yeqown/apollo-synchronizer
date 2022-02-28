@@ -194,8 +194,8 @@
         </a-steps>
 
         <div id="step-content">
-          <div>
-            <a-spin tip="executing, wait please" :spinning="loading">
+          <a-spin tip="Executing, wait please" :spinning="loading">
+            <div>
               <template v-if="syncStepsCurrent === 0">
                 <a-result title="Fetching namespaces from apollo, please wait!">
                   <template #icon>
@@ -204,15 +204,22 @@
                 </a-result>
               </template>
 
-              <template v-if="syncStepsCurrent === 1">
+              <template v-else-if="syncStepsCurrent === 1">
                 <a-table
+                  id="table1"
                   :columns="[
-                    { title: 'Namespace', dataIndex: 'key', key: 'key' },
+                    {
+                      title: 'Namespace',
+                      dataIndex: 'key',
+                      key: 'key',
+                      width: 150,
+                    },
                     {
                       title: 'Operation',
                       dataIndex: 'mode',
                       key: 'mode',
                       slots: { customRender: 'operation' },
+                      width: 100,
                     },
                     {
                       title: 'File',
@@ -245,21 +252,27 @@
                     type="primary"
                     @click="confirmSynchronize"
                     :disabled="!syncContinueAble"
-                    :loading="loading"
                     >Confirm</a-button
                   >
                 </div>
               </template>
 
-              <template v-if="syncStepsCurrent === 2">
+              <template v-else-if="syncStepsCurrent === 2">
                 <a-table
+                  id="table2"
                   :columns="[
-                    { title: 'Namespace', dataIndex: 'key', key: 'key' },
+                    {
+                      title: 'Namespace',
+                      dataIndex: 'key',
+                      key: 'key',
+                      width: 150,
+                    },
                     {
                       title: 'Operation',
                       dataIndex: 'mode',
                       key: 'mode',
                       slots: { customRender: 'operation' },
+                      width: 100,
                     },
                     {
                       title: 'Executed Result',
@@ -272,6 +285,7 @@
                       dataIndex: 'published',
                       key: 'published',
                       slots: { customRender: 'published' },
+                      width: 100,
                     },
                   ]"
                   :pagination="{ hideOnSinglePage: true }"
@@ -319,14 +333,12 @@
                       }
                     "
                     :disabled="!syncContinueAble"
-                    :loading="loading"
                     >Continue</a-button
                   >
                 </div>
               </template>
 
-              <!-- setp 4 -->
-              <template v-if="syncStepsCurrent === 3">
+              <template v-else-if="syncStepsCurrent === 3">
                 <a-result
                   :status="syncResult.success ? 'success' : 'error'"
                   :title="
@@ -335,10 +347,11 @@
                       : syncResult.failedReason
                   "
                 >
+                  <!-- TODO(@yeqown): Final Countdown to close modal -->
                 </a-result>
               </template>
-            </a-spin>
-          </div>
+            </div>
+          </a-spin>
 
           <!-- button for debug -->
           <!-- <a-button
@@ -455,13 +468,13 @@ export default {
     ],
     syncContinueAble: true,
     syncRenderResults: [
-      // {
-      //   key: "mock.yaml",
-      //   mode: "M~",
-      //   error: "hahah",
-      //   published: true,
-      //   succeeded: true,
-      // },
+      {
+        key: "mock.yaml",
+        mode: "M~",
+        error: "hahah",
+        published: true,
+        succeeded: true,
+      },
     ],
     syncStepsCurrent: 0,
     syncModalVisible: false,
@@ -480,29 +493,6 @@ export default {
         notificationError(err);
       }
     );
-
-    // DONE(@yeqown): register event listener to recv event and data from background.
-    bindEventOnce(EVENT_RENDER_DIFF, (data) => {
-      console.log("event render diff triggered", data);
-      this.syncRenderDiffs = data;
-      setTimeout(() => {
-        this.loading = false;
-        this.syncStepsCurrent = 1;
-      }, 1000);
-    });
-
-    bindEventOnce(EVENT_RENDER_RESULT, (data) => {
-      console.log("event render result triggered", data);
-      this.syncRenderResults = data;
-      setTimeout(() => {
-        this.loading = false;
-        this.syncStepsCurrent = 2;
-      }, 500);
-    });
-  },
-  unmounted() {
-    unbindEvent(EVENT_RENDER_DIFF);
-    unbindEvent(EVENT_RENDER_RESULT);
   },
   methods: {
     doSynchronize() {
@@ -575,11 +565,35 @@ export default {
       );
 
       this.syncModalVisible = true;
+      this.bindEvents();
+    },
+    bindEvents() {
+      // DONE(@yeqown): register event listener to recv event and data from background.
+      bindEventOnce(EVENT_RENDER_DIFF, (data) => {
+        console.log("event render diff triggered", data);
+        this.syncRenderDiffs = data;
+        setTimeout(() => {
+          this.loading = false;
+          this.syncStepsCurrent = 1;
+        }, 1000);
+      });
+
+      bindEventOnce(EVENT_RENDER_RESULT, (data) => {
+        console.log("event render result triggered", data);
+        this.syncRenderResults = data;
+        this.loading = false;
+      });
+    },
+    unbindEvents() {
+      console.log("unbindEvents=============");
+      unbindEvent(EVENT_RENDER_DIFF);
+      unbindEvent(EVENT_RENDER_RESULT);
     },
     confirmSynchronize() {
       console.log("confirmSynchronize============");
       inputDecide(decideMapping["confirm"]);
       this.loading = true;
+      this.syncStepsCurrent = 2;
     },
     handleSettingChange(value) {
       // console.log("handleSettingChange", value);
@@ -590,6 +604,7 @@ export default {
     },
     handleModalCloseCallback() {
       console.log("handleModalCloseCallback called");
+      this.unbindEvents();
       // modal close callback
       this.loading = false;
       this.syncStepsCurrent = 0;
@@ -616,12 +631,12 @@ export default {
 
 #synchronize-render {
   margin-top: 1.5em;
-  max-height: 450px;
+  max-height: 500px;
 }
 
 #step-content {
   /* overflow: scroll; */
-  height: 300px;
+  /* height: 300px; */
   width: 100%;
   margin-top: 1em;
 }

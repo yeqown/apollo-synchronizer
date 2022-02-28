@@ -60,10 +60,14 @@
       >
         <template #renderItem="{ item, index }">
           <a-list-item :key="item.title">
-            <template #extra>
+            <template #actions>
               <DeleteTwoTone
                 two-tone-color="#eb2f96"
                 @click="handleDeleteSetting(index)"
+              />
+              <EditTwoTone
+                two-tone-color="#1890ff"
+                @click="handleEditSetting(index)"
               />
             </template>
 
@@ -249,7 +253,11 @@
 <script>
 // import { ref } from "vue";
 import { loadSetting, saveSetting } from "../interact/index";
-import { notificationError, notificationSuccess } from "../utils/notification";
+import {
+  notificationError,
+  notificationSuccess,
+  notificationWarning,
+} from "../utils/notification";
 import {
   PageHeader,
   Button,
@@ -276,6 +284,7 @@ import {
   ClusterOutlined,
   EnvironmentOutlined,
   DeleteTwoTone,
+  EditTwoTone,
 } from "@ant-design/icons-vue";
 
 export default {
@@ -305,6 +314,7 @@ export default {
     ClusterOutlined,
     EnvironmentOutlined,
     DeleteTwoTone,
+    EditTwoTone,
   },
   data() {
     return {
@@ -314,6 +324,7 @@ export default {
       form: {},
       formAddEnv: "",
       formAddCluster: "",
+      editingIndex: -1,
     };
   },
   mounted() {
@@ -346,7 +357,11 @@ export default {
       this.editModalVisible = true;
     },
     handleEditModalOk() {
-      this.settings.push(this.form);
+      if (this.editingIndex >= 0) {
+        this.settings[this.editingIndex] = this.form;
+      } else {
+        this.settings.push(this.form);
+      }
 
       this.editModalVisible = false;
       this.modified = true;
@@ -370,6 +385,16 @@ export default {
       let settings = this.settings;
       settings.splice(index, 1);
       this.settings = settings;
+    },
+    handleEditSetting(index) {
+      console.log("handleEditSetting index=", index);
+      if (index >= 0) {
+        this.editingIndex = index;
+        this.form = this.settings[index];
+        this.editModalVisible = true;
+      } else {
+        notificationWarning("Please select a setting to edit.");
+      }
     },
     handleEnvAddConfirm() {
       // console.log("handleEnvAddConfirm", this.formAddEnv);
