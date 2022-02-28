@@ -184,7 +184,7 @@ func (t termuiRenderer) RenderingResult(results []*asy.SynchronizeResult) {
 	_ = t.wait()
 }
 
-func (t termuiRenderer) renderResultSingle(r *synchronizeResult) []string {
+func (t termuiRenderer) renderResultSingle(r *asy.SynchronizeResult) []string {
 	formatBool := func(b bool) string {
 		if b {
 			return "O"
@@ -193,10 +193,10 @@ func (t termuiRenderer) renderResultSingle(r *synchronizeResult) []string {
 	}
 
 	return []string{
-		string(r.mode),
-		r.key,
-		formatBool(r.succeeded),
-		formatBool(r.published),
-		r.error,
+		string(r.Mode),
+		r.Key,
+		formatBool(r.Succeeded),
+		formatBool(r.Published),
+		r.Error,
 	}
 }
