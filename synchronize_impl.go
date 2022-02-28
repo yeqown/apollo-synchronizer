@@ -301,7 +301,7 @@ func (s synchronizer) upload(ctx context.Context, d Diff1, autoPublish bool) (r 
 			err = err2
 			goto Failed
 		}
-
+		r.Bytes = len(bytes)
 		_, err = s.apollo.UpdateNamespaceItem(
 			ctx, s.scope.ApolloAppID, s.scope.ApolloEnv, s.scope.ApolloClusterName, ns, "content", string(bytes))
 		if err != nil {
