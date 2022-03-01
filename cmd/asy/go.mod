@@ -1,4 +1,4 @@
-module asy
+module github.com/yeqown/apollo-synchronizer/cmd/asy
 
 go 1.17
 
