@@ -7,7 +7,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli/v2 v2.3.0
-	github.com/yeqown/apollo-synchronizer v1.3.1
+	github.com/yeqown/apollo-synchronizer v1.3.2
 	github.com/yeqown/log v1.1.1
 )
 
