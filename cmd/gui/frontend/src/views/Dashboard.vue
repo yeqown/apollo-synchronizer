@@ -156,7 +156,10 @@ export default {
     _openURL(url) {
       if (window.runtime && window.runtime.BrowserOpenURL) {
         window.runtime.BrowserOpenURL(url);
+        return;
       }
+
+      console.warn(`window.runtime.BrowserOpenURL is not supported.`);
     },
   },
   mounted() {

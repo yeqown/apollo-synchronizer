@@ -77,24 +77,56 @@
               size="small"
               :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }"
             >
-              <a-descriptions-item label="Portal">{{
-                item.portalAddr
-              }}</a-descriptions-item>
-              <a-descriptions-item label="Clusters">{{
-                item.clusters
-              }}</a-descriptions-item>
-              <a-descriptions-item label="Envs">{{
-                item.envs
-              }}</a-descriptions-item>
-              <a-descriptions-item label="Account">
-                {{ item.account }}
+              <a-descriptions-item
+                label="Title"
+                :labelStyle="{
+                  backgroundColor: '#f5f5f5',
+                  fontWeight: 'bold',
+                }"
+              >
+                {{ item.title }}
               </a-descriptions-item>
-              <a-descriptions-item label="Secret">{{
-                item.secret
-              }}</a-descriptions-item>
-              <a-descriptions-item label="Directory">{{
-                item.fs
-              }}</a-descriptions-item>
+              <a-descriptions-item
+                label="Portal"
+                :span="2"
+                :labelStyle="{
+                  backgroundColor: '#f5f5f5',
+                  fontWeight: 'bold',
+                }"
+                :contentStyle="{ color: '#1a90ff' }"
+              >
+                <a @click="_openURL(item.portalAddr)"> {{ item.portalAddr }}</a>
+              </a-descriptions-item>
+              <a-descriptions-item
+                label="Apollo Config"
+                :span="3"
+                :labelStyle="{
+                  backgroundColor: '#f5f5f5',
+                  fontWeight: 'bold',
+                }"
+              >
+                Account: {{ item.account }}
+                <br />
+                Envs: {{ item.envs }}
+                <br />
+                Clusters: {{ item.clusters }}
+                <br />
+                Secret: {{ item.secret }}
+              </a-descriptions-item>
+              <a-descriptions-item
+                label="Directory"
+                :span="3"
+                :labelStyle="{
+                  backgroundColor: '#f5f5f5',
+                  fontWeight: 'bold',
+                }"
+              >
+                <FolderOpenOutlined
+                  @click="_openURL(item.fs)"
+                  style="margin-right: 1em"
+                />
+                <a @click="_openURL(item.fs)">{{ item.fs }}</a>
+              </a-descriptions-item>
             </a-descriptions>
           </a-list-item>
         </template>
@@ -426,6 +458,14 @@ export default {
         (cluster) => cluster !== removeCluster
       );
       this.form.clusters = clusters;
+    },
+    _openURL(url) {
+      if (window.runtime && window.runtime.BrowserOpenURL) {
+        window.runtime.BrowserOpenURL(url);
+        return;
+      }
+
+      console.warn(`window.runtime.BrowserOpenURL is not supported.`);
     },
   },
 };
