@@ -1,5 +1,16 @@
 # README
 
+
+## Usage shots
+
+<img src="../../assets/shot1.png">
+<img src="../../assets/shot2.png">
+<img src="../../assets/shot3.png">
+<img src="../../assets/shot4.png">
+<img src="../../assets/shot5.png">
+<img src="../../assets/shot6.png">
+
+
 ## About
 
 This template uses vanilla JS / HTML and CSS.

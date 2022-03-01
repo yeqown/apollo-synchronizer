@@ -1,3 +1,5 @@
+<img src="./assets/shot1.png" />
+
 # apollo-synchronizer
 Help developer to sync between local file and remote apollo portal web since portal web is so messy to use
 
@@ -8,6 +10,7 @@ Help developer to sync between local file and remote apollo portal web since por
 - [x] use terminal ui to display synchronization information.
 - [x] apply `force` and `overwrite` flag
 - [ ] maybe some customize filter to dismiss some file/namespace?
+- [x] GUI support for better user experience. [README](./cmd/gui/README.md)
 
 ### Quick start
 
