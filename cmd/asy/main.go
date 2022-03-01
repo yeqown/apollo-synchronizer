@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"os"
-	"path"
-	"sync"
 
 	"github.com/pkg/errors"
 
@@ -12,6 +10,7 @@ import (
 	"github.com/yeqown/log"
 
 	asy "github.com/yeqown/apollo-synchronizer"
+	"github.com/yeqown/apollo-synchronizer/pkg/recommend"
 )
 
 func main() {
@@ -86,8 +85,8 @@ var flags = []cli.Flag{
 		Name:        "path",
 		Usage:       "specify the path to synchronize",
 		TakesFile:   false,
-		Value:       defaultPath(),
-		DefaultText: defaultPath(),
+		Value:       recommend.RootPath(),
+		DefaultText: recommend.RootPath(),
 	},
 	//&cli.StringSliceFlag{
 	//	Name:      "file",
@@ -140,18 +139,4 @@ var flags = []cli.Flag{
 
 var commands = []*cli.Command{
 	genToolCommand(),
-}
-
-var (
-	_defaultPath    string
-	_defautPathOnce sync.Once
-)
-
-func defaultPath() string {
-	_defautPathOnce.Do(func() {
-		home, _ := os.UserHomeDir()
-		_defaultPath = path.Join(home, ".apollo-synchronizer")
-	})
-
-	return _defaultPath
 }

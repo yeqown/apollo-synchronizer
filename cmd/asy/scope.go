@@ -11,6 +11,8 @@ import (
 	"github.com/yeqown/log"
 
 	asy "github.com/yeqown/apollo-synchronizer"
+	"github.com/yeqown/apollo-synchronizer/pkg/fs"
+	"github.com/yeqown/apollo-synchronizer/pkg/recommend"
 )
 
 // fillSynchronizeScope to fill scope in order:
@@ -22,27 +24,20 @@ func fillSynchronizeScope(ctx *cli.Context) (scope *asy.SynchronizeScope) {
 	tryFromFile(cwd, scope)
 	tryFromContext(ctx, scope)
 
+	var err error
 	if !path.IsAbs(scope.Path) {
 		scope.Path, _ = filepath.Abs(scope.Path)
 	}
-	scope.Path = path.Join(scope.Path, scope.ApolloAppID)
+	scope.Path = recommend.GenerateAppPath(scope.Path, scope.ApolloAppID, scope.ApolloEnv, scope.ApolloClusterName)
 	if scope.Mode == asy.SynchronizeMode_DOWNLOAD {
-		fi, err := os.Stat(scope.Path)
-		if err == nil && !fi.IsDir() {
-			log.Fatalf("%s is not a directory", scope.Path)
-		}
-
-		if err != nil {
-			if !os.IsNotExist(err) {
-				log.Fatal("%s stat failed", scope.Path)
-			}
-
-			if err = os.MkdirAll(scope.Path, 0755); err != nil {
-				log.Fatal("create directory(%s) failed: %v", scope.Path, err)
-			}
+		if err = fs.MakeSure(scope.Path); err != nil {
+			log.Fatalf("make sure path %s failed: %v", scope.Path, err)
 		}
 	}
-	scope.LocalFiles = travelDirectory(scope.Path, false)
+	scope.LocalFiles, err = fs.TravelDirectory(scope.Path, false)
+	if err != nil {
+		log.Fatalf("travel directory %s failed: %v", scope.Path, err)
+	}
 
 	//switch scope.Mode {
 	//case pkg.SynchronizeMode_UPLOAD:
@@ -58,7 +53,6 @@ func fillSynchronizeScope(ctx *cli.Context) (scope *asy.SynchronizeScope) {
 	//	scope.LocalFiles = travelDirectory(scope.Path, false)
 	//}
 
-	var err error
 	for idx, f := range scope.LocalFiles {
 		if scope.LocalFiles[idx], err = filepath.Abs(f); err != nil {
 			log.Fatal("stat file failed: %s", f)
@@ -159,22 +153,4 @@ func tryFromContext(ctx *cli.Context, scope *asy.SynchronizeScope) {
 
 	// local filesystem
 	scope.Path = ctx.String("path")
-}
-
-func travelDirectory(root string, recursive bool) []string {
-	files, err := os.ReadDir(root)
-	if err != nil {
-		log.Fatalf("failed to travelDirectory: %v", err)
-	}
-
-	out := make([]string, 0, len(files))
-	for _, fp := range files {
-		if fp.IsDir() {
-			continue
-		}
-
-		out = append(out, filepath.Join(root, fp.Name()))
-	}
-
-	return out
 }

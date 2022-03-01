@@ -6,7 +6,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.0
 	github.com/wailsapp/wails/v2 v2.0.0-beta.32
-	github.com/yeqown/apollo-synchronizer v1.3.0
+	github.com/yeqown/apollo-synchronizer v1.3.1
 )
 
 require (
@@ -46,4 +46,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 )
 
-//replace github.com/yeqown/apollo-synchronizer v1.2.1 => ../../
+//replace github.com/yeqown/apollo-synchronizer => ../../

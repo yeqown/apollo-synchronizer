@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/yeqown/apollo-synchronizer/pkg/recommend"
+
 	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/menu"
 	"github.com/wailsapp/wails/v2/pkg/menu/keys"
@@ -33,16 +35,9 @@ func NewApp() *App {
 	}
 }
 
-func appConfigRoot() string {
-	home, _ := os.UserHomeDir()
-	asyRoot := filepath.Join(home, ".asy")
-
-	return asyRoot
-}
-
 var (
-	_configFp     string = filepath.Join(appConfigRoot(), "asyrc")
-	_statisticsFp string = filepath.Join(appConfigRoot(), "statistics.bat")
+	_configFp     string = filepath.Join(recommend.RootPath(), "asyrc")
+	_statisticsFp string = filepath.Join(recommend.RootPath(), "statistics.bat")
 )
 
 // load config and statistics for app.

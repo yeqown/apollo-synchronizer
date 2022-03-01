@@ -3,11 +3,11 @@ package backend
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"time"
 
 	asy "github.com/yeqown/apollo-synchronizer"
+	"github.com/yeqown/apollo-synchronizer/pkg/fs"
 )
 
 type SynchronizeScope struct {
@@ -69,11 +69,15 @@ func (b *App) Synchronize(param *SynchronizeScope) (result *synchronizeResult) {
 	apppath := filepath.Join(param.Path,
 		fmt.Sprintf("%s-%s-%s", param.ApolloAppID, param.ApolloEnv, param.ApolloClusterName))
 
-	if err := prepareAppPath(apppath); err != nil {
+	if err := fs.MakeSure(apppath); err != nil {
 		result.markFailure(err)
 		return result
 	}
-	localFiles := travelDirectory(apppath, false)
+	localFiles, err := fs.TravelDirectory(apppath, false)
+	if err != nil {
+		result.markFailure(err)
+		return result
+	}
 
 	scope := asy.SynchronizeScope{
 		ApolloPortalAddr:  param.ApolloPortalAddr,
@@ -138,42 +142,4 @@ func (b *App) SaveSetting(settings []apolloClusterSetting) error {
 func (b *App) Statistics() statistics {
 	b.debugf("App.Statistics called, statistics: %+v\n", b.statistics)
 	return *b.statistics
-}
-
-func prepareAppPath(apppath string) error {
-	fi, err := os.Stat(apppath)
-	if err == nil && !fi.IsDir() {
-		return fmt.Errorf("%s is not a directory", apppath)
-	}
-
-	if err != nil {
-		if !os.IsNotExist(err) {
-
-			return fmt.Errorf("%s stat failed", apppath)
-		}
-
-		if err = os.MkdirAll(apppath, 0755); err != nil {
-			return fmt.Errorf("create directory(%s) failed: %v", apppath, err)
-		}
-	}
-
-	return nil
-}
-
-func travelDirectory(root string, recursive bool) []string {
-	files, err := os.ReadDir(root)
-	if err != nil {
-		fmt.Printf("failed to travelDirectory: %v\n", err)
-	}
-
-	out := make([]string, 0, len(files))
-	for _, fp := range files {
-		if fp.IsDir() {
-			continue
-		}
-
-		out = append(out, filepath.Join(root, fp.Name()))
-	}
-
-	return out
 }
