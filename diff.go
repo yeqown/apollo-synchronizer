@@ -21,17 +21,9 @@ type Diff1 struct {
 
 type sorterDiff1 []Diff1
 
-func (d sorterDiff1) Len() int {
-	return len(d)
-}
-
-func (d sorterDiff1) Less(i, j int) bool {
-	return d[i].Key < d[j].Key
-}
-
-func (d sorterDiff1) Swap(i, j int) {
-	d[i], d[j] = d[j], d[i]
-}
+func (d sorterDiff1) Len() int           { return len(d) }
+func (d sorterDiff1) Less(i, j int) bool { return d[i].Key < d[j].Key }
+func (d sorterDiff1) Swap(i, j int)      { d[i], d[j] = d[j], d[i] }
 
 // compare from and to, calculate the diffs between from and to obey the rule:
 // 1. Key exists in `from` and `to` get 'M' Mode
